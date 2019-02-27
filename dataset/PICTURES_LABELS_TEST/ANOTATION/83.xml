@@ -1,0 +1,26 @@
+<annotation>
+	<folder>test</folder>
+	<filename>83.jpg</filename>
+	<path>F:\111\hazePerson\baseOnCNN\test\83.jpg</path>
+	<source>
+		<database>Unknown</database>
+	</source>
+	<size>
+		<width>125</width>
+		<height>127</height>
+		<depth>3</depth>
+	</size>
+	<segmented>0</segmented>
+	<object>
+		<name>person</name>
+		<pose>Unspecified</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>20</xmin>
+			<ymin>20</ymin>
+			<xmax>56</xmax>
+			<ymax>123</ymax>
+		</bndbox>
+	</object>
+</annotation>

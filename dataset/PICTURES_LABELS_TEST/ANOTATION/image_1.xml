@@ -1,0 +1,26 @@
+<annotation>
+	<folder>pos_norm</folder>
+	<filename>image_1.png</filename>
+	<path>F:\111\hazePerson\baseOnHOG\pos_norm\image_1.png</path>
+	<source>
+		<database>Unknown</database>
+	</source>
+	<size>
+		<width>32</width>
+		<height>64</height>
+		<depth>3</depth>
+	</size>
+	<segmented>0</segmented>
+	<object>
+		<name>person</name>
+		<pose>Unspecified</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>4</xmin>
+			<ymin>10</ymin>
+			<xmax>29</xmax>
+			<ymax>62</ymax>
+		</bndbox>
+	</object>
+</annotation>
