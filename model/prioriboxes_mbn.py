@@ -74,7 +74,6 @@ def prioriboxes_mbn(inputs, attention_module, bboxs_each_cell=2, input_check=Tru
         return det_out, clf_out
 
 
-
 if __name__ == '__main__':
     imgs = tf.placeholder(tf.float32, shape=(None, 224, 224, 3))
     a, b = prioriboxes_mbn(inputs=imgs, attention_module=se_block)

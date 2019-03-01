@@ -5,18 +5,23 @@ from xml.dom.minidom import parse
 import xml.dom.minidom
 import glob
 import random
+import copy
+
 import threading
 import queue
+import ctypes
+import inspect
 
-import time
+import train_utils.tools as train_tools
+import config
 
-pic_train_dir = "./PICTURES_LABELS_TRAIN/PICTURES/"
-label_train_dir = "./PICTURES_LABELS_TRAIN/ANOTATION/"
+pic_train_dir_str = "PICTURES_LABELS_TRAIN/PICTURES/"
+label_train_dir_str = "PICTURES_LABELS_TRAIN/ANOTATION/"
 
-pic_test_dir = "./PICTURES_LABELS_TEST/PICTURES/"
-label_test_dir = "./PICTURES_LABELS_TEST/ANOTATION/"
+pic_test_dir_str = "PICTURES_LABELS_TEST/PICTURES/"
+label_test_dir_str = "PICTURES_LABELS_TEST/ANOTATION/"
 
-class dataset(object):
+class provider(object):
     """provide multi threads API for reading data
     #### multi thread ####            ## multi thread ##
     ######################    ##      ##################    ##     #######################
@@ -25,10 +30,15 @@ class dataset(object):
     ######################      ##    ##################      ##   #######################
     ######################    ##      ##################    ##     #######################
 
-    Example:
-        dt = dataset(batch_size=10, for_what="train")
+    Example 1:
+        dt = provider(batch_size=10, for_what="train")
         for step in range(100):
-            imgs, labels = dt.load_batch()
+            imgs, labels, t_bboxes = dt.load_batch()
+            ## do sth ##
+
+    Example 2:
+        with provider(batch_size=10,for_what="train") as pd:
+            imgs, labels, t_bboxes = pd.load_batch()
             ## do sth ##
     """
     __imgs_name = None
@@ -46,26 +56,31 @@ class dataset(object):
             for_what: indicate train or test, must be "train" or "test"
         """
         ##
+
+        assert batch_size > 0
+
         if for_what not in ["train", "test"]:
             raise ValueError('pls ensure for_what must be "train" or "test"')
         else:
             self.__for_what = for_what
+            data_root = os.path.dirname(__file__)
             if for_what == "train":
                 ## load the imgs file name ##
-                match = os.path.join(pic_train_dir, "*.jpg")
+                match = os.path.join(data_root, pic_train_dir_str + "*.jpg")
+
                 self.__imgs_name = glob.glob(match)
                 if len(self.__imgs_name) == 0:
                     raise ValueError("can not found the imgs, pls " +
                                      "check pic_train_dir and ensure img format must be jpeg")
-                self.__label_dir = label_train_dir
+                self.__label_dir = os.path.join(data_root, label_train_dir_str)
             else:
                 ## load the imgs file name ##
-                match = os.path.join(pic_test_dir, "*.jpg")
+                match = os.path.join(data_root, pic_test_dir_str + "*.jpg")
                 self.__imgs_name = glob.glob(match)
                 if len(self.__imgs_name) == 0:
                     raise ValueError("can not found the imgs, pls " +
                                      "check pic_train_dir and ensure img format must be jpeg")
-                self.__label_dir = label_test_dir
+                self.__label_dir = os.path.join(data_root, label_test_dir_str)
 
         self.__batch_size = batch_size
         self.__start_read_data(batch_size=batch_size)
@@ -77,26 +92,38 @@ class dataset(object):
 
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        print(exc_type)
-        pass
+        if exc_type!=None:
+            print(exc_type)
+            print(exc_val)
+            print(exc_tb)
+            exit(1)
+
+        # if self.__read_threads!=None or self.__batch_threads!=None:
+        #     self.stop_loading()
+        #     print("kill all threads...")
+        #     exit(0)
 
 
     def load_batch(self):
         """get the batch data
-        Return: a list of img with the len of batch_size
+        Return:
+            if dataset is for training, return imgs, labels, t_bboxes:
+                imgs: a list of img with the shape (224,224,3)
                 a list of label with the len of batch_size
         """
         batch_data = self.__batch_queue.get()
         return batch_data[0], batch_data[1]
 
-
-    def get_all_thread(self):
-        """ return all threads
+    def stop_loading(self):
+        """to kill all threads
         """
-        return self.__read_threads + self.__batch_threads
+        threads = self.__read_threads + self.__batch_threads
+        for thread in threads:
+            self.__async_raise(thread.ident, SystemExit)
+        pass
 
 
-    def __start_read_data(self, batch_size, thread_num=4, capacity_scalar=5):
+    def __start_read_data(self, batch_size, thread_num=4, capacity_scalar=1):
         """ start use multi thread to read data to the queue
         Args:
             thread_num: the number of threads used to read data
@@ -108,6 +135,7 @@ class dataset(object):
         ## start threads
         for i in range(thread_num):
             thread = threading.Thread(target=self.__send_data)
+            thread.setDaemon(True)
             thread.start()
             self.__read_threads.append(thread)
 
@@ -125,6 +153,7 @@ class dataset(object):
 
         for i in range(thread_num):
             thread = threading.Thread(target=self.__batch_data, args=(batch_size,))
+            thread.setDaemon(True)
             thread.start()
             self.__batch_threads.append(thread)
 
@@ -132,16 +161,25 @@ class dataset(object):
     def __batch_data(self, batch_size):
         """dequeue the data_queue and batch the data into a batch_queue
         """
+        first = True
+        batch_container_list = []
         while True:
-            batch_img = []
-            batch_label = []
             for i in range(batch_size):
-                data = self.__data_queue.get()
-                batch_img.append(data[0])
-                batch_label.append(data[1])
+                data_list = self.__data_queue.get()
+                if first:
+                    ## init the batch_list ##
+                    for i in range(len(data_list)):
+                        batch_container_list.append([])
+                    first = False
+
+                for batch_container,data_item in zip(batch_container_list,data_list):
+                    batch_container.append(data_item)
 
             ## put the batch data into batch_queue ##
-            self.__batch_queue.put([batch_img, batch_label])
+            self.__batch_queue.put(copy.deepcopy(batch_container_list))
+
+            for batch_container in batch_container_list:
+                batch_container.clear()
 
 
     def __send_data(self):
@@ -154,11 +192,20 @@ class dataset(object):
 
             label_name = os.path.join(self.__label_dir,(basefile+".xml"))
 
-            img, label = self.__read_one_sample(img_name,label_name)
-
-            ## put data into data queue ##
-            self.__data_queue.put([img, label])
-            #print("send")
+            img, bboxes = self.__read_one_sample(img_name,label_name)
+            ## resize img and normalize img and bboxes##
+            img, bboxes = train_tools.normalize_data(img, bboxes, config.img_output_size)
+            # if self.__for_what == "train":
+            #     labels, bboxes = \
+            #         train_tools.ground_truth_one_img(corner_bboxes=bboxes,
+            #                                          priori_boxes=priori_bboxes,
+            #                                          surounding_size=2,top_k=2)
+            #
+            #     ## put data into data queue ##
+            #     self.__data_queue.put([img, labels, bboxes])
+            # else:
+            #     self.__data_queue.put([img, bboxes])
+            self.__data_queue.put([img, bboxes])
 
 
     def __read_one_sample(self, img_name, label_name):
@@ -191,10 +238,23 @@ class dataset(object):
         labels = np.stack(labels,axis=0)
         return img, labels
 
+    def __async_raise(self, tid, exctype):
+        """raises the exception, performs cleanup if needed"""
+        tid = ctypes.c_long(tid)
+        if not inspect.isclass(exctype):
+            exctype = type(exctype)
+        res = ctypes.pythonapi.PyThreadState_SetAsyncExc(tid, ctypes.py_object(exctype))
+        if res == 0:
+            raise ValueError("invalid thread id")
+        elif res != 1:
+            # """if it returns a number greater than one, you're in trouble,
+            # and you should call it again with exc=NULL to revert the effect"""
+            ctypes.pythonapi.PyThreadState_SetAsyncExc(tid, None)
+            raise SystemError("PyThreadState_SetAsyncExc failed")
 
 
 if __name__ == '__main__':
-    dt = dataset(batch_size=10, for_what="train")
+    dt = provider(batch_size=10, for_what="train")
 
     for step in range(100):
         imgs, labels = dt.load_batch()
