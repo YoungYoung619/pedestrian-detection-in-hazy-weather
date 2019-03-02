@@ -9,6 +9,11 @@ encoded by [height, width]
 priori_bboxes = np.array([[158, 65], [65, 79]], dtype=np.float32)
 
 
-"""output img size, encoded by [height, width]
+"""img size, encoded by [height, width]
 """
-img_output_size = (224,224)
+img_size = (224,224)
+
+"""
+grid cell size, means divide img into 7x7 grid cells
+"""
+grid_cell_size = (7, 7)

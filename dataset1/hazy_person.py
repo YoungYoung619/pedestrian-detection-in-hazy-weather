@@ -36,9 +36,18 @@ class provider(object):
             imgs, labels, t_bboxes = dt.load_batch()
             ## do sth ##
 
+        dt = provider(batch_size=10, for_what="test")
+        for step in range(100):
+            imgs, corner_bboxes = dt.load_batch()
+            ## do sth ##
+
     Example 2:
         with provider(batch_size=10,for_what="train") as pd:
             imgs, labels, t_bboxes = pd.load_batch()
+            ## do sth ##
+
+        with provider(batch_size=10,for_what="test") as pd:
+            imgs, corner_bboxes = pd.load_batch()
             ## do sth ##
     """
     __imgs_name = None
@@ -48,6 +57,7 @@ class provider(object):
     __batch_queue = None
     __read_threads = None
     __batch_threads = None
+    __threads_name = None
 
     def __init__(self, batch_size, for_what):
         """init
@@ -82,6 +92,7 @@ class provider(object):
                                      "check pic_train_dir and ensure img format must be jpeg")
                 self.__label_dir = os.path.join(data_root, label_test_dir_str)
 
+        self.__threads_name = []
         self.__batch_size = batch_size
         self.__start_read_data(batch_size=batch_size)
         self.__start_batch_data(batch_size=batch_size)
@@ -93,26 +104,54 @@ class provider(object):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if exc_type!=None:
+            if self.__threads_name != []:
+                exist_threads = threading.enumerate()
+                exist_threads_name = [exist_thread.name for exist_thread in exist_threads]
+                for thread_name in self.__threads_name:
+                    if thread_name not in exist_threads_name:
+                        names = str.split(thread_name,"_")
+                        if names[0] == "read":
+                            restart_thread = threading.Thread(target=self.__send_data)
+                            restart_thread.setName(thread_name)
+                            restart_thread.setDaemon(True)
+                            restart_thread.start()
+                            print("restart a down thread")
+                            return True
+                        elif names[0] == "batch":
+                            restart_thread = threading.Thread(target=self.__batch_data,
+                                                              args=(self.__batch_size,))
+                            restart_thread.setName(thread_name)
+                            restart_thread.setDaemon(True)
+                            restart_thread.start()
+                            print("restart a down thread")
+                            return True
+
             print(exc_type)
             print(exc_val)
             print(exc_tb)
             exit(1)
-
-        # if self.__read_threads!=None or self.__batch_threads!=None:
-        #     self.stop_loading()
-        #     print("kill all threads...")
-        #     exit(0)
 
 
     def load_batch(self):
         """get the batch data
         Return:
             if dataset is for training, return imgs, labels, t_bboxes:
-                imgs: a list of img with the shape (224,224,3)
-                a list of label with the len of batch_size
+                imgs: a list of img, with the shape (h, w, c)
+                labels: a list of labels, with the shape (grid_h, grid_w, pboxes_num, 1)
+                        0 is background, 1 is object
+                t_bboxes: a list of t_bboxes with the shape (grid_h, grid_w, pboxes_num, 4)
+            if dataset is for test, return imgs, corner_bboxes
+                imgs: a list of img, with the shape (h, w, c)
+                corner_bboxes: a list of bboxes, with the shape (?, 4), encoded by [ymin,
+                xin, ymax, xmax]
         """
         batch_data = self.__batch_queue.get()
-        return batch_data[0], batch_data[1]
+        if self.__for_what == "train":
+            ## return imgs, lebels, t_bboxes ##
+            return batch_data[0], batch_data[1], batch_data[2]
+        else:
+            ## return imgs , corner_bboxes ##
+            return batch_data[0], batch_data[1]
 
     def stop_loading(self):
         """to kill all threads
@@ -123,37 +162,43 @@ class provider(object):
         pass
 
 
-    def __start_read_data(self, batch_size, thread_num=4, capacity_scalar=1):
+    def __start_read_data(self, batch_size, thread_num=4, capacity_scalar=2):
         """ start use multi thread to read data to the queue
         Args:
             thread_num: the number of threads used to read data
             batch_size: the buffer size which used to store the data
         """
         self.__read_threads = []
-        self.__data_queue = queue.Queue(batch_size*capacity_scalar)
+        maxsize = np.maximum(batch_size*capacity_scalar, 5)
+        self.__data_queue = queue.Queue(maxsize=maxsize)
 
         ## start threads
         for i in range(thread_num):
             thread = threading.Thread(target=self.__send_data)
             thread.setDaemon(True)
+            thread.setName("read_thread_id%d"%(i))
+            self.__threads_name.append("read_thread_id%d"%(i))
             thread.start()
             self.__read_threads.append(thread)
 
 
-    def __start_batch_data(self, batch_size, thread_num=4, capacity_scalar=5):
+    def __start_batch_data(self, batch_size, thread_num=4, queue_size=5):
         """ start the threads to batch data into the batch_queue
         Args:
             batch_size: the batch size.
             thread_num: the number of threads
-            capacity_scalar: the whole capacity of batch_queue is
-                             capacity_scalar*batch_size
+            queue_size: the max batch queue length
         """
+        assert queue_size > 0
+
         self.__batch_threads = []
-        self.__batch_queue = queue.Queue(batch_size*capacity_scalar)
+        self.__batch_queue = queue.Queue(queue_size)
 
         for i in range(thread_num):
             thread = threading.Thread(target=self.__batch_data, args=(batch_size,))
             thread.setDaemon(True)
+            thread.setName("batch_thread_id%d"%(i))
+            self.__threads_name.append("batch_thread_id%d"%(i))
             thread.start()
             self.__batch_threads.append(thread)
 
@@ -185,6 +230,7 @@ class provider(object):
     def __send_data(self):
         """ a single thread which send a data to the data queue
         """
+        priori_bboxes = config.priori_bboxes / config.img_size
         while True:
             img_name = random.sample(self.__imgs_name, 1)[0]
             filename = os.path.basename(img_name)
@@ -194,18 +240,17 @@ class provider(object):
 
             img, bboxes = self.__read_one_sample(img_name,label_name)
             ## resize img and normalize img and bboxes##
-            img, bboxes = train_tools.normalize_data(img, bboxes, config.img_output_size)
-            # if self.__for_what == "train":
-            #     labels, bboxes = \
-            #         train_tools.ground_truth_one_img(corner_bboxes=bboxes,
-            #                                          priori_boxes=priori_bboxes,
-            #                                          surounding_size=2,top_k=2)
-            #
-            #     ## put data into data queue ##
-            #     self.__data_queue.put([img, labels, bboxes])
-            # else:
-            #     self.__data_queue.put([img, bboxes])
-            self.__data_queue.put([img, bboxes])
+            img, bboxes = train_tools.normalize_data(img, bboxes, config.img_size)
+            if self.__for_what == "train":
+                labels, bboxes = \
+                    train_tools.ground_truth_one_img(corner_bboxes=bboxes,
+                                                     priori_boxes=priori_bboxes,
+                                                     surounding_size=2,top_k=2)
+
+                ## put data into data queue ##
+                self.__data_queue.put([img, labels, bboxes])
+            else:
+                self.__data_queue.put([img, bboxes])
 
 
     def __read_one_sample(self, img_name, label_name):

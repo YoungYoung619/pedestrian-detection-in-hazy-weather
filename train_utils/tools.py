@@ -39,6 +39,10 @@ def ground_truth_one_img(corner_bboxes, priori_boxes, grid_cell_size=(7, 7),
         surounding_size: the range of positive examples searched by algorithm
         top_k: means we choose top-k ovr boxes to be positive boxes
     Return:
+        label: a ndarray with the shape (grid_h, grid_w, pboxes_num, 1), in which
+                0 indicates background, 1 indicates object.
+        transform_info: a ndarray with the shape (grid_h, grid_w, pboxes_num, 4)
+                        represents the t_bboxes
     """
     if grid_cell_size != (7, 7):
         raise ValueError("if you ensure you have changed the output shape of net," +

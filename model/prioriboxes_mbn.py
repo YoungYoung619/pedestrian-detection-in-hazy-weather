@@ -6,7 +6,7 @@ slim = tf.contrib.slim
 
 extract_feature_names = ['layer_7', 'layer_14', 'layer_19']
 
-def prioriboxes_mbn(inputs, attention_module, bboxs_each_cell=2, input_check=True, is_training=True):
+def prioriboxes_mbn(inputs, attention_module, is_training, bboxs_each_cell=2, input_check=True):
     """ the whole model is inspried by yolov2, what makes our model different
         is that our model use mobilenetV2 as backbone
     Args:
@@ -76,7 +76,7 @@ def prioriboxes_mbn(inputs, attention_module, bboxs_each_cell=2, input_check=Tru
 
 if __name__ == '__main__':
     imgs = tf.placeholder(tf.float32, shape=(None, 224, 224, 3))
-    a, b = prioriboxes_mbn(inputs=imgs, attention_module=se_block)
+    a, b = prioriboxes_mbn(inputs=imgs, attention_module=se_block, is_training=True)
 
 
 

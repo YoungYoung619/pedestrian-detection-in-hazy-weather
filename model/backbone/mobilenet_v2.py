@@ -128,6 +128,13 @@ def pad2d(inputs, pad=(0, 0), mode='CONSTANT'):
     return net
 
 def mobilenetv2(inputs, is_training=True):
+    """mobilenetv2( deleted the global average pooling )
+    Args:
+        inputs: a tensor with the shape (bs, h, w, c)
+        is_training: indicate whether to train or test
+    Return:
+        all the end point.
+    """
     endPoints = collections.OrderedDict()
     exp = 6  # expansion ratio
     with tf.variable_scope('mobilenetv2'):
