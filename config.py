@@ -17,3 +17,8 @@ img_size = (224,224)
 grid cell size, means divide img into 7x7 grid cells
 """
 grid_cell_size = (7, 7)
+
+"""
+dataset info
+"""
+n_data_train = 1000
