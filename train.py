@@ -48,8 +48,6 @@ tf.app.flags.DEFINE_integer(
     'f_save_step', 1000,
     'The frequency with which summaries are saved, in step.')
 
-
-
 FLAGS = tf.app.flags.FLAGS
 
 slim = tf.contrib.slim
@@ -88,7 +86,7 @@ def build_graph(model_name, attention_module, is_training):
         minx = tf.minimum(absx, 1)
         r = 0.5 * ((absx - 1) * minx + absx) ## smooth_l1
         ## i change smooth_l1, casue i wanne the minimum to be 0. ##
-        return r + 0.5
+        return r
 
     net = model_factory(inputs=inputs, model_name=model_name,
                         attention_module=attention_module, is_training=is_training)
@@ -220,11 +218,10 @@ def main(_):
                     print("-----------------------------------------\n")
                     avg_det_loss = 0.
                     avg_clf_loss = 0.
-                    pass
 
                 if step == FLAGS.f_summary_step-1:
                     ## summary ##
-                    writer.add_summary(merge_ops, current_step)
+                    writer.add_summary(m_ops, current_step)
 
                 if step == FLAGS.f_save_step-1:
                     ## save model ##

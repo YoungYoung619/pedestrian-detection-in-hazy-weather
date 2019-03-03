@@ -141,8 +141,8 @@ def ground_truth_one_img(corner_bboxes, priori_boxes, grid_cell_size=(7, 7),
             h_gt = corner_bbox[2] - corner_bbox[0]
             w_gt = corner_bbox[3] - corner_bbox[1]
 
-            y_t = (y_c_gt - y_c_anchor) / y_c_anchor
-            x_t = (x_c_gt - x_c_anchor) / x_c_anchor
+            y_t = (y_c_gt - y_c_anchor) / h_anchor
+            x_t = (x_c_gt - x_c_anchor) / w_anchor
             h_t = math.log(h_gt / h_anchor)
             w_t = math.log(w_gt / w_anchor)
 

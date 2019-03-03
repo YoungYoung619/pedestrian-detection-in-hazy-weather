@@ -245,7 +245,7 @@ class provider(object):
                 labels, bboxes = \
                     train_tools.ground_truth_one_img(corner_bboxes=bboxes,
                                                      priori_boxes=priori_bboxes,
-                                                     surounding_size=2,top_k=2)
+                                                     surounding_size=2,top_k=1)
 
                 ## put data into data queue ##
                 self.__data_queue.put([img, labels, bboxes])
