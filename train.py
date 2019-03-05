@@ -234,3 +234,7 @@ def main(_):
 
 if __name__ == '__main__':
     tf.app.run()
+
+
+with tf.Session() as sess:
+    input = sess.run([X], feed_dict=feed_dict)
