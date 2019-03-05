@@ -1,0 +1,2 @@
+model_checkpoint_path: "prioriboxes_mbn.model"
+all_model_checkpoint_paths: "prioriboxes_mbn.model"

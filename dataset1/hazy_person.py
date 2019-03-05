@@ -12,7 +12,8 @@ import queue
 import ctypes
 import inspect
 
-import train_utils.tools as train_tools
+import utils.train_tools as train_tools
+
 import config
 
 pic_train_dir_str = "PICTURES_LABELS_TRAIN/PICTURES/"

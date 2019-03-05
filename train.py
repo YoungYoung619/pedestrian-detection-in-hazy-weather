@@ -24,28 +24,28 @@ tf.app.flags.DEFINE_string(
     'The path to a checkpoint from which to fine-tune.')
 
 tf.app.flags.DEFINE_string(
-    'train_dir', '/checkpoint/',
+    'train_dir', './checkpoint/',
     'Directory where checkpoints are written to.')
 
 tf.app.flags.DEFINE_string(
-    'summary_dir', '/summary/',
+    'summary_dir', './summary/',
     'Directory where checkpoints are written to.')
 
 tf.app.flags.DEFINE_float('learning_rate', 0.01, 'Initial learning rate.')
 
 tf.app.flags.DEFINE_integer(
-    'batch_size', 5, 'The number of samples in each batch.')
+    'batch_size', 20, 'The number of samples in each batch.')
 
 tf.app.flags.DEFINE_integer(
     'f_log_step', 1,
     'The frequency with which logs are print.')
 
 tf.app.flags.DEFINE_integer(
-    'f_summary_step', 10,
+    'f_summary_step', 2,
     'The frequency with which the model is saved, in step.')
 
 tf.app.flags.DEFINE_integer(
-    'f_save_step', 1000,
+    'f_save_step', 50,
     'The frequency with which summaries are saved, in step.')
 
 FLAGS = tf.app.flags.FLAGS
@@ -90,7 +90,7 @@ def build_graph(model_name, attention_module, is_training):
 
     net = model_factory(inputs=inputs, model_name=model_name,
                         attention_module=attention_module, is_training=is_training)
-    bboxes_pred, logits_pred = net.get_output_for_loss()
+    bboxes_pred, logits_pred = net.get_output_for_train()
 
     with tf.name_scope("det_loss_process"):
         det_loss = tf.reduce_sum(_smooth_l1(bboxes_pred - bboxes_gt)) / FLAGS.batch_size
@@ -179,6 +179,7 @@ def main(_):
 
     with tf.Session() as sess:
         ## create a summary writer ##
+        summary_dir = os.path.join(FLAGS.summary_dir)
         writer = tf.summary.FileWriter(FLAGS.summary_dir, sess.graph)
 
         if FLAGS.checkpoint_dir ==None:
@@ -209,7 +210,7 @@ def main(_):
                 avg_clf_loss = (avg_clf_loss * step + c_loss) / (step + 1.)
                 avg_time = (avg_time * step + t) / (step + 1.)
 
-                if step == FLAGS.f_log_step-1:
+                if current_step%FLAGS.f_log_step == FLAGS.f_log_step-1:
                     ## print info ##
                     print("-------------Global Step %d--------------"%(current_step))
                     print("Average det loss is %f" % (avg_det_loss))
@@ -219,11 +220,11 @@ def main(_):
                     avg_det_loss = 0.
                     avg_clf_loss = 0.
 
-                if step == FLAGS.f_summary_step-1:
+                if current_step%FLAGS.f_summary_step == FLAGS.f_summary_step-1:
                     ## summary ##
                     writer.add_summary(m_ops, current_step)
 
-                if step == FLAGS.f_save_step-1:
+                if current_step%FLAGS.f_save_step == FLAGS.f_save_step-1:
                     ## save model ##
                     print("Saving model...")
                     model_name = os.path.join(FLAGS.train_dir,FLAGS.model_name+".model")
