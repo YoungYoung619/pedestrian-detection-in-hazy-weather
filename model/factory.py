@@ -1,11 +1,13 @@
 from model.prioriboxes_mbn import prioriboxes_mbn
+from model.prioriboxes_vgg import prioriboxes_vgg
 import model.attention_module as attention
 
 import config
 import numpy as np
 import tensorflow as tf
 
-model_map = {"prioriboxes_mbn":prioriboxes_mbn}
+model_map = {"prioriboxes_mbn":prioriboxes_mbn,
+             "prioriboxes_vgg":prioriboxes_vgg}
 
 slim = tf.contrib.slim
 
@@ -19,13 +21,18 @@ class model_factory(object):
             is_training: indicate whether to train or test.
         """
         assert model_name in model_map.keys()
-        assert attention_module in ["se_block", "cbam_block"]
+        assert attention_module in ["se_block", "cbam_block", None]
+
+        if model_name == "prioriboxes_mbn" and attention_module==None:
+            raise ValueError("prioriboxes_mbn must choose attention_module")
 
         self.model_name = model_name
         if attention_module == "se_block":
             self.attention_module = attention.se_block
-        else:
+        elif attention_module == "cbam_block":
             self.attention_module = attention.cbam_block
+        else:
+            self.attention_module = None
 
         self.det_out, self.clf_out \
             = model_map[model_name](inputs=inputs, attention_module=self.attention_module,

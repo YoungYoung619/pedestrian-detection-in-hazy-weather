@@ -127,7 +127,7 @@ def pad2d(inputs, pad=(0, 0), mode='CONSTANT'):
     net = tf.pad(inputs, paddings, mode=mode)
     return net
 
-def mobilenetv2(inputs, is_training=True):
+def mobilenetv2(inputs, is_training):
     """mobilenetv2( deleted the global average pooling )
     Args:
         inputs: a tensor with the shape (bs, h, w, c)

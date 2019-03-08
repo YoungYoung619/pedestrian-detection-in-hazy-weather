@@ -16,8 +16,12 @@ tf.app.flags.DEFINE_string(
     'The name of the architecture to train.')
 
 tf.app.flags.DEFINE_string(
-    'attention_module', 'se_block',
-    'The name of attention module to apply.')
+    'attention_module', "se_block",
+    '''The name of attention module to apply.
+    For prioriboxes_mbn, must be "se_block" 
+    or "cbam_block"; For prioriboxes_vgg, can
+    be None
+    ''')
 
 tf.app.flags.DEFINE_string(
     'checkpoint_dir', None,
@@ -34,7 +38,7 @@ tf.app.flags.DEFINE_string(
 tf.app.flags.DEFINE_float('learning_rate', 0.01, 'Initial learning rate.')
 
 tf.app.flags.DEFINE_integer(
-    'batch_size', 20, 'The number of samples in each batch.')
+    'batch_size', 10, 'The number of samples in each batch.')
 
 tf.app.flags.DEFINE_integer(
     'f_log_step', 1,
@@ -85,7 +89,6 @@ def build_graph(model_name, attention_module, is_training):
         absx = tf.abs(x)
         minx = tf.minimum(absx, 1)
         r = 0.5 * ((absx - 1) * minx + absx) ## smooth_l1
-        ## i change smooth_l1, casue i wanne the minimum to be 0. ##
         return r
 
     net = model_factory(inputs=inputs, model_name=model_name,
@@ -124,13 +127,16 @@ def build_graph(model_name, attention_module, is_training):
                                neg_score < max_hard_pred)
         hard_neg_mask = tf.cast(nmask, tf.float32)
 
-        loss = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits_pred,
-                                                                      labels=tf.reshape(label_gt,[-1]))
+        # clf_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits_pred,
+        #                                                               labels=tf.reshape(label_gt,[-1]))
 
-        pos_loss = tf.reduce_sum(loss * pos_mask) / FLAGS.batch_size
-        neg_loss = tf.reduce_sum(loss * hard_neg_mask) / FLAGS.batch_size
+        #pos_loss = tf.reduce_sum(loss * pos_mask) / FLAGS.batch_size
+        #neg_loss = tf.reduce_sum(loss * hard_neg_mask) / FLAGS.batch_size
 
-        return det_loss, pos_loss + neg_loss
+        clf_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits_pred, labels = tf.reshape(label_gt, [-1]))
+        clf_loss = tf.reduce_sum(clf_loss) / FLAGS.batch_size
+        #return det_loss, pos_loss + neg_loss
+        return det_loss, clf_loss
 
 
 def build_optimizer(det_loss, clf_loss, var_list=None):
@@ -145,13 +151,13 @@ def build_optimizer(det_loss, clf_loss, var_list=None):
     with tf.name_scope("optimize"):
         loss = det_loss + clf_loss
 
-        learning_rate = tf.train.exponential_decay(FLAGS.learning_rate, global_step,
-                                                   config.n_data_train / FLAGS.batch_size,
-                                                   0.94, staircase=True)
+        # learning_rate = tf.train.exponential_decay(FLAGS.learning_rate, global_step,
+        #                                            2*config.n_data_train / FLAGS.batch_size,
+        #                                            0.97, staircase=True)
 
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
         with tf.control_dependencies(update_ops):
-            optimizer = tf.train.RMSPropOptimizer(learning_rate, decay=0.9,
+            optimizer = tf.train.RMSPropOptimizer(FLAGS.learning_rate, decay=0.9,
                                                   momentum=0.9,
                                                   epsilon=1.0)
             if var_list == None:
@@ -161,7 +167,7 @@ def build_optimizer(det_loss, clf_loss, var_list=None):
 
         tf.summary.scalar("det_loss", det_loss)
         tf.summary.scalar("clf_loss", clf_loss)
-        tf.summary.scalar("learning_rate", learning_rate)
+        #tf.summary.scalar("learning_rate", learning_rate)
         return train_ops
 
 
@@ -188,6 +194,7 @@ def main(_):
         else:
             model_name = os.path.join(FLAGS.checkpoint_dir, FLAGS.model_name+".model")
             tf.train.Saver().restore(sess, model_name)
+            print("Load checkpoint success...")
 
         with provider(batch_size=FLAGS.batch_size, for_what="train") as pd:
             avg_det_loss = 0.
@@ -234,7 +241,3 @@ def main(_):
 
 if __name__ == '__main__':
     tf.app.run()
-
-
-with tf.Session() as sess:
-    input = sess.run([X], feed_dict=feed_dict)

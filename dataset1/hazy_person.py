@@ -99,6 +99,7 @@ class provider(object):
         self.__start_batch_data(batch_size=batch_size)
         pass
 
+
     def __enter__(self):
         return self
 
@@ -283,6 +284,7 @@ class provider(object):
                 labels.append(label)
         labels = np.stack(labels,axis=0)
         return img, labels
+
 
     def __async_raise(self, tid, exctype):
         """raises the exception, performs cleanup if needed"""
