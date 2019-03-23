@@ -27,7 +27,7 @@ tf.app.flags.DEFINE_string(
     ''')
 
 tf.app.flags.DEFINE_string(
-    'checkpoint_dir', './checkpoint',
+    'checkpoint_dir', None,
     'The path to a checkpoint from which to fine-tune.')
 
 tf.app.flags.DEFINE_string(
@@ -175,7 +175,14 @@ def build_optimizer(det_loss, clf_loss, var_list=None):
 def main(_):
     """ start training
     """
+    ## assert ##
+    logger.info('Asserting parameters')
+    assert FLAGS.f_log_step > 0
+    assert FLAGS.f_save_step > 0
+    assert FLAGS.f_summary_step > 0
+
     ## build graph ##
+    logger.info('Building graph, using %s...'%(FLAGS.model_name))
     det_loss, clf_loss = build_graph(model_name=FLAGS.model_name,
                                      attention_module=FLAGS.attention_module, is_training=True)
     ## build optimizer ##
@@ -183,6 +190,9 @@ def main(_):
 
     ## summary ops ##
     merge_ops = tf.summary.merge_all()
+    logger.info('Build graph success...')
+    logger.info('Total trainable parameters:%s'%
+                str(np.sum([np.prod(v.get_shape().as_list()) for v in tf.trainable_variables()])))
 
     with tf.Session() as sess:
         ## create a summary writer ##
@@ -191,13 +201,13 @@ def main(_):
 
         if FLAGS.checkpoint_dir ==None:
             sess.run(tf.global_variables_initializer())
-            logger.info("TF variables init success...")
+            logger.info('TF variables init success...')
         else:
-            model_name = os.path.join(FLAGS.checkpoint_dir, FLAGS.model_name+".model")
+            model_name = os.path.join(FLAGS.checkpoint_dir, FLAGS.model_name+'.model')
             tf.train.Saver().restore(sess, model_name)
-            logger.info("Load checkpoint success...")
+            logger.info('Load checkpoint success...')
 
-        with provider(batch_size=FLAGS.batch_size, for_what="train", whether_aug=True) as pd:
+        with provider(batch_size=FLAGS.batch_size, for_what='train', whether_aug=True) as pd:
             avg_det_loss = 0.
             avg_clf_loss = 0.
             avg_time = 0.
@@ -220,7 +230,7 @@ def main(_):
 
                 if current_step%FLAGS.f_log_step == FLAGS.f_log_step-1:
                     ## print info ##
-                    logger.info("Step%s det_loss:%s clf_loss:%s time:%s"%(str(current_step),
+                    logger.info('Step%s det_loss:%s clf_loss:%s time:%s'%(str(current_step),
                                                                           str(avg_det_loss),
                                                                           str(avg_clf_loss),
                                                                           str(avg_time)))
@@ -233,10 +243,10 @@ def main(_):
 
                 if current_step%FLAGS.f_save_step == FLAGS.f_save_step-1:
                     ## save model ##
-                    print("Saving model...")
-                    model_name = os.path.join(FLAGS.train_dir,FLAGS.model_name+".model")
+                    print('Saving model...')
+                    model_name = os.path.join(FLAGS.train_dir,FLAGS.model_name+'.model')
                     tf.train.Saver(tf.global_variables()).save(sess, model_name)
-                    print("Save model sucess...")
+                    print('Save model sucess...')
 
 
 if __name__ == '__main__':

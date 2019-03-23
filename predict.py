@@ -19,7 +19,7 @@ tf.app.flags.DEFINE_string(
     'The name of the architecture to train.')
 
 tf.app.flags.DEFINE_string(
-    'attention_module', 'cbam_block',
+    'attention_module', 'se_block',
     'The name of attention module to apply.')
 
 tf.app.flags.DEFINE_string(
@@ -84,6 +84,7 @@ def main(_):
                 start = time()
                 # norm_imgs, labels, corner_bboxes_gt = pd.load_batch()
                 norm_imgs, corner_bboxes_gt = pd.load_batch()
+                print(corner_bboxes_gt)
                 imgs = np.uint8((norm_imgs[0] + 1.)*255 / 2)
                 imgs_for_gt = cv2.resize(imgs, dsize=(FLAGS.vis_img_height, FLAGS.vis_img_width))
                 imgs_for_pred = imgs_for_gt.copy()

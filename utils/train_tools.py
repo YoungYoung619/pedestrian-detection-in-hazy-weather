@@ -224,8 +224,18 @@ def ground_truth_one_img(corner_bboxes, priori_boxes, grid_cell_size=(7, 7),
 
             y_t = (y_c_gt - y_c_anchor) / h_anchor
             x_t = (x_c_gt - x_c_anchor) / w_anchor
-            h_t = math.log(h_gt / h_anchor)
-            w_t = math.log(w_gt / w_anchor)
+            try:
+                h_t = math.log(h_gt / h_anchor)
+            except ValueError:
+                print("h_gt", h_gt)
+                print("h_a",h_anchor)
+                print("h/h", h_gt / h_anchor)
+            try:
+                w_t = math.log(w_gt / w_anchor)
+            except ValueError:
+                print("w_gt", w_gt)
+                print("w_a", w_anchor)
+                print("w/w", w_gt / w_anchor)
 
             transform_info[index_info[0], index_info[1], index_info[2]] = [y_t, x_t, h_t, w_t]
             label[index_info[0], index_info[1], index_info[2]] = 1
