@@ -2,6 +2,87 @@ from __future__ import division
 import numpy as np
 import cv2
 import math
+try:
+    import imgaug as ia
+    from imgaug import augmenters as iaa
+except Exception:
+    raise ImportError("Pls install imgaug with (pip install imgaug)")
+
+
+## a seq of img augumentation ##
+data_aug_seq = iaa.SomeOf(3,[
+        iaa.Fliplr(0.5),  # horizontal flips
+        iaa.Crop(percent=(0, 0.2)),  # random crops
+
+        # Small gaussian blur with random sigma between 0 and 0.5.
+        # But we only blur about 50% of all images.
+        iaa.Sometimes(0.5,
+                      iaa.GaussianBlur(sigma=(0, 0.5))
+                      ),
+
+        # Strengthen or weaken the contrast in each image.
+        iaa.ContrastNormalization((0.75, 1.5)),
+
+        # Add gaussian noise.
+        # For 50% of all images, we sample the noise once per pixel.
+        # For the other 50% of all images, we sample the noise per pixel AND
+        # channel. This can change the color (not only brightness) of the
+        # pixels.
+        iaa.AdditiveGaussianNoise(loc=0, scale=(0.0, 0.05 * 255), per_channel=0.5),
+
+        # Make some images brighter and some darker.
+        # In 20% of all cases, we sample the multiplier once per channel,
+        # which can end up changing the color of the images.
+        iaa.Multiply((0.8, 1.2), per_channel=0.2),
+
+        # Apply affine transformations to each image.
+        # Scale/zoom them, translate/move them, rotate them and shear them.
+        iaa.Affine(
+            scale={"x": (0.8, 1.2), "y": (0.8, 1.2)},
+            translate_percent={"x": (-0.2, 0.2), "y": (-0.2, 0.2)},
+            rotate=[-25,25]
+        )
+    ], random_order=True)  # apply augmenters in random order
+
+
+def imgaugboxes_2_corner_bboxes(imgaugboxes):
+    """"""
+    bboxes = []
+    for bbox in imgaugboxes.bounding_boxes:
+        bboxes.append(np.array([bbox.y1, bbox.x1, bbox.y2, bbox.x2]))
+
+    return np.array(bboxes)
+
+
+def img_aug(img, corner_bbox):
+    """img augumentation
+    Args:
+        img: ndarray img with any shape [h, w, c]
+        corner_bbox: a list or ndarray of bbox with shape [n, 4],
+                     encoded by [ymin, xmin, ymax, xmax]
+    Return:
+        img: after augumentation
+        cornet_bbox: after augumentation
+    """
+
+    bboxes = []
+    for bbox in corner_bbox:
+        x1 = bbox[1]
+        y1 = bbox[0]
+        x2 = bbox[3]
+        y2 = bbox[2]
+        bboxes.append(ia.BoundingBox(x1=x1, y1=y1, x2=x2, y2=y2, label="person"))
+
+    bbs = ia.BoundingBoxesOnImage(bboxes, shape=img.shape)
+
+    seq_det = data_aug_seq.to_deterministic()
+
+    ## augumentation ##
+    image_aug = seq_det.augment_images([img])[0]
+    bbs_aug = seq_det.augment_bounding_boxes([bbs])[0].remove_out_of_image().clip_out_of_image()
+
+    return image_aug, imgaugboxes_2_corner_bboxes(bbs_aug)
+
 
 def normalize_data(raw_img, corner_bbox, size=(224,224)):
     """make the raw imgs and raw labels into a standard scalar.

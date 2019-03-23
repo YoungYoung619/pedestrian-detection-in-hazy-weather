@@ -1,7 +1,7 @@
 <annotation>
-	<folder>hazePerson</folder>
+	<folder>PICTURES</folder>
 	<filename>577.jpg</filename>
-	<path>F:\111\hazePerson\577.jpg</path>
+	<path>F:\my_project\pedestrain_detection_in_hazy\dataset1\PICTURES_LABELS_TRAIN\PICTURES\577.jpg</path>
 	<source>
 		<database>Unknown</database>
 	</source>
@@ -33,6 +33,30 @@
 			<ymin>15</ymin>
 			<xmax>299</xmax>
 			<ymax>387</ymax>
+		</bndbox>
+	</object>
+	<object>
+		<name>person</name>
+		<pose>Unspecified</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>264</xmin>
+			<ymin>92</ymin>
+			<xmax>297</xmax>
+			<ymax>314</ymax>
+		</bndbox>
+	</object>
+	<object>
+		<name>person</name>
+		<pose>Unspecified</pose>
+		<truncated>1</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>285</xmin>
+			<ymin>89</ymin>
+			<xmax>317</xmax>
+			<ymax>358</ymax>
 		</bndbox>
 	</object>
 </annotation>

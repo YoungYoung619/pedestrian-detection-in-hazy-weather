@@ -9,7 +9,8 @@ encoded by [height, width]
 priori_bboxes = np.array([[158, 65], [65, 79]], dtype=np.float32)
 
 
-"""img size, encoded by [height, width]
+"""img size, encoded by [height, width],
+could not be rondomly change
 """
 img_size = (224,224)
 

@@ -19,18 +19,18 @@ tf.app.flags.DEFINE_string(
     'The name of the architecture to train.')
 
 tf.app.flags.DEFINE_string(
-    'attention_module', 'se_block',
+    'attention_module', 'cbam_block',
     'The name of attention module to apply.')
 
 tf.app.flags.DEFINE_string(
-    'checkpoint_dir', "/checkpoint",
-    'The path to a checkpoint from which to fine-tune.')
+    'checkpoint_dir', "./checkpoint",
+    'The path to a checkpoint    from which to fine-tune.')
 
 tf.app.flags.DEFINE_float(
-    'select_threshold', 0.45, 'obj score less than it would be filter')
+    'select_threshold', 0.05, 'obj score less than it would be filter')
 
 tf.app.flags.DEFINE_float(
-    'nms_threshold', 0.5, 'nms threshold')
+    'nms_threshold', 0.4, 'nms threshold')
 
 tf.app.flags.DEFINE_integer(
     'keep_top_k', 10, 'maximun num of obj after nms')
@@ -79,9 +79,10 @@ def main(_):
             tf.train.Saver().restore(sess, model_name)
             print("Load checkpoint success...")
 
-        with provider(batch_size=1, for_what="test") as pd:
+        with provider(batch_size=1, for_what="test", whether_aug=True) as pd:
             while (True):
                 start = time()
+                # norm_imgs, labels, corner_bboxes_gt = pd.load_batch()
                 norm_imgs, corner_bboxes_gt = pd.load_batch()
                 imgs = np.uint8((norm_imgs[0] + 1.)*255 / 2)
                 imgs_for_gt = cv2.resize(imgs, dsize=(FLAGS.vis_img_height, FLAGS.vis_img_width))
@@ -112,6 +113,12 @@ def main(_):
                         cv2.rectangle(imgs_for_pred, (bbox[1],bbox[0]), (bbox[3],bbox[2]),
                                       thickness=2, color=(0,255,0))
 
+                for bbox in corner_bboxes_gt:
+                    if bbox.any() != 0:
+                        cv2.rectangle(imgs_for_gt, (bbox[1],bbox[0]), (bbox[3],bbox[2]),
+                                      thickness=2, color=(0,0,255))
+
+                cv2.imshow("gt", imgs_for_gt)
                 cv2.imshow("pred", imgs_for_pred)
                 cv2.waitKey(0)
                 cv2.destroyAllWindows()

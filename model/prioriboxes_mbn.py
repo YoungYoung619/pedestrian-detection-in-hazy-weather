@@ -46,7 +46,7 @@ def prioriboxes_mbn(inputs, attention_module, is_training, bboxs_each_cell=2, in
                     ex_feat = slim.conv2d(ex_feat, ex_feat.get_shape()[3] // 2, [1, 1])
                 else:
                     ex_feat = slim.conv2d(ex_feat, ex_feat.get_shape()[3] // 4, [1, 1])
-                ex_feat = slim.batch_norm(ex_feat,is_training=is_training, activation_fn=tf.nn.leaky_relu)
+                ex_feat = slim.batch_norm(ex_feat, is_training=is_training, activation_fn=tf.nn.leaky_relu)
                 if i < len(extract_feature_names)-1:
                     ex_feat = tf.space_to_depth(ex_feat, block_size=h[i]//h[-1])
                 ex_feat = attention_module(ex_feat, name="block%d"%(i))
@@ -67,8 +67,9 @@ def prioriboxes_mbn(inputs, attention_module, is_training, bboxs_each_cell=2, in
                     net = slim.batch_norm(net, is_training=is_training, activation_fn=tf.nn.leaky_relu)
                     net = slim.conv2d(net, channel, [3, 3])
                     net = slim.batch_norm(net, is_training=is_training, activation_fn=tf.nn.leaky_relu)
+
             net = slim.batch_norm(net, is_training=is_training, activation_fn=None)
-            net = tf.reshape(net,shape=[tf.shape(inputs)[0],-1,6])
+            net = tf.reshape(net,shape=[tf.shape(inputs)[0], -1, 6])
             sz = tf.shape(net)
             det_out = tf.slice(net, begin=[0,0,0], size=[sz[0],sz[1],4]) #[y_t, x_t, h_t, w_t]
             clf_out = tf.slice(net, begin=[0,0,4], size=[sz[0],sz[1],2]) #[bg_socre, obj_score]

@@ -43,7 +43,7 @@ def cbam_block(inputs, name, reduction_ratio=0.5):
            a tensor after recalibration
        """
     with tf.variable_scope("cbam_" + name, reuse=tf.AUTO_REUSE):
-        batch_size, hidden_num = inputs.get_shape().as_list()[0], inputs.get_shape().as_list()[3]
+        batch_size, hidden_num = tf.shape(inputs)[0], inputs.get_shape().as_list()[3]
 
         maxpool_channel = tf.reduce_max(tf.reduce_max(inputs, axis=1, keepdims=True), axis=2, keepdims=True)
         avgpool_channel = tf.reduce_mean(tf.reduce_mean(inputs, axis=1, keepdims=True), axis=2, keepdims=True)

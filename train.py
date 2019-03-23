@@ -5,8 +5,11 @@ from time import time
 
 from model.factory import model_factory
 from dataset1.hazy_person import provider
-
 import config
+
+import logging
+logging.basicConfig(level = logging.INFO,format = '%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 # =========================================================================== #
 # General Flags.
@@ -24,7 +27,7 @@ tf.app.flags.DEFINE_string(
     ''')
 
 tf.app.flags.DEFINE_string(
-    'checkpoint_dir', None,
+    'checkpoint_dir', './checkpoint',
     'The path to a checkpoint from which to fine-tune.')
 
 tf.app.flags.DEFINE_string(
@@ -35,21 +38,21 @@ tf.app.flags.DEFINE_string(
     'summary_dir', './summary/',
     'Directory where checkpoints are written to.')
 
-tf.app.flags.DEFINE_float('learning_rate', 0.01, 'Initial learning rate.')
+tf.app.flags.DEFINE_float('learning_rate', 0.0001, 'Initial learning rate.')
 
 tf.app.flags.DEFINE_integer(
-    'batch_size', 10, 'The number of samples in each batch.')
+    'batch_size', 50, 'The number of samples in each batch.')
 
 tf.app.flags.DEFINE_integer(
-    'f_log_step', 1,
+    'f_log_step', 20,
     'The frequency with which logs are print.')
 
 tf.app.flags.DEFINE_integer(
-    'f_summary_step', 2,
+    'f_summary_step', 10,
     'The frequency with which the model is saved, in step.')
 
 tf.app.flags.DEFINE_integer(
-    'f_save_step', 50,
+    'f_save_step', 2000,
     'The frequency with which summaries are saved, in step.')
 
 FLAGS = tf.app.flags.FLAGS
@@ -95,9 +98,6 @@ def build_graph(model_name, attention_module, is_training):
                         attention_module=attention_module, is_training=is_training)
     bboxes_pred, logits_pred = net.get_output_for_train()
 
-    with tf.name_scope("det_loss_process"):
-        det_loss = tf.reduce_sum(_smooth_l1(bboxes_pred - bboxes_gt)) / FLAGS.batch_size
-
     with tf.name_scope("clf_loss_process"):
         logits_pred = tf.reshape(logits_pred, shape=[-1, 2])
         pred = slim.softmax(logits_pred)
@@ -121,22 +121,25 @@ def build_graph(model_name, attention_module, is_training):
 
         val, idxes = tf.nn.top_k(-neg_score, k=n_neg)
         max_hard_pred = -val[-1]
-        tf.summary.scalar("max hard predition", max_hard_pred)  ## the bigger, the better
+        tf.summary.scalar("max_hard_predition", max_hard_pred)  ## the bigger, the better
 
         nmask = tf.logical_and(tf.cast(neg_mask, dtype=tf.bool),
                                neg_score < max_hard_pred)
         hard_neg_mask = tf.cast(nmask, tf.float32)
 
-        # clf_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits_pred,
-        #                                                               labels=tf.reshape(label_gt,[-1]))
+        clf_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits_pred,
+                                                                  labels=tf.reshape(label_gt,[-1]))
 
-        #pos_loss = tf.reduce_sum(loss * pos_mask) / FLAGS.batch_size
-        #neg_loss = tf.reduce_sum(loss * hard_neg_mask) / FLAGS.batch_size
+        pos_loss = tf.reduce_sum(clf_loss * pos_mask)
+        neg_loss = tf.reduce_sum(clf_loss * hard_neg_mask)
 
-        clf_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits_pred, labels = tf.reshape(label_gt, [-1]))
-        clf_loss = tf.reduce_sum(clf_loss) / FLAGS.batch_size
-        #return det_loss, pos_loss + neg_loss
-        return det_loss, clf_loss
+        # clf_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits_pred, labels = tf.reshape(label_gt, [-1]))
+        # clf_loss = tf.reduce_sum(clf_loss) #/ FLAGS.batch_size
+
+    with tf.name_scope("det_loss_process"):
+        det_loss = tf.reduce_sum(_smooth_l1(tf.reshape((bboxes_pred - bboxes_gt),[-1,4])*tf.expand_dims(pos_mask,axis=-1)))# / FLAGS.batch_size
+
+    return det_loss, pos_loss + neg_loss
 
 
 def build_optimizer(det_loss, clf_loss, var_list=None):
@@ -149,7 +152,7 @@ def build_optimizer(det_loss, clf_loss, var_list=None):
         a train_ops
     """
     with tf.name_scope("optimize"):
-        loss = det_loss + clf_loss
+        loss = 5*det_loss + 0.5*clf_loss
 
         # learning_rate = tf.train.exponential_decay(FLAGS.learning_rate, global_step,
         #                                            2*config.n_data_train / FLAGS.batch_size,
@@ -157,9 +160,7 @@ def build_optimizer(det_loss, clf_loss, var_list=None):
 
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
         with tf.control_dependencies(update_ops):
-            optimizer = tf.train.RMSPropOptimizer(FLAGS.learning_rate, decay=0.9,
-                                                  momentum=0.9,
-                                                  epsilon=1.0)
+            optimizer = tf.train.AdamOptimizer(FLAGS.learning_rate)
             if var_list == None:
                 train_ops = optimizer.minimize(loss, global_step= global_step)
             else:
@@ -190,13 +191,13 @@ def main(_):
 
         if FLAGS.checkpoint_dir ==None:
             sess.run(tf.global_variables_initializer())
-            print("TF variables init success...")
+            logger.info("TF variables init success...")
         else:
             model_name = os.path.join(FLAGS.checkpoint_dir, FLAGS.model_name+".model")
             tf.train.Saver().restore(sess, model_name)
-            print("Load checkpoint success...")
+            logger.info("Load checkpoint success...")
 
-        with provider(batch_size=FLAGS.batch_size, for_what="train") as pd:
+        with provider(batch_size=FLAGS.batch_size, for_what="train", whether_aug=True) as pd:
             avg_det_loss = 0.
             avg_clf_loss = 0.
             avg_time = 0.
@@ -219,11 +220,10 @@ def main(_):
 
                 if current_step%FLAGS.f_log_step == FLAGS.f_log_step-1:
                     ## print info ##
-                    print("-------------Global Step %d--------------"%(current_step))
-                    print("Average det loss is %f" % (avg_det_loss))
-                    print("Average clf loss is %f"%(avg_clf_loss))
-                    print("Average training time in one step is %f" % (avg_time))
-                    print("-----------------------------------------\n")
+                    logger.info("Step%s det_loss:%s clf_loss:%s time:%s"%(str(current_step),
+                                                                          str(avg_det_loss),
+                                                                          str(avg_clf_loss),
+                                                                          str(avg_time)))
                     avg_det_loss = 0.
                     avg_clf_loss = 0.
 

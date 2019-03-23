@@ -53,6 +53,7 @@ class provider(object):
     """
     __imgs_name = None
     __for_what = None
+    __whether_aug =None
 
     __data_queue = None
     __batch_queue = None
@@ -60,15 +61,19 @@ class provider(object):
     __batch_threads = None
     __threads_name = None
 
-    def __init__(self, batch_size, for_what):
+    def __init__(self, batch_size, for_what, whether_aug):
         """init
         Args:
             batch_size: the size of a batch
             for_what: indicate train or test, must be "train" or "test"
+            whether_aug: whether to augument the img
         """
         ##
 
         assert batch_size > 0
+        assert type(whether_aug) == bool
+
+        self.__whether_aug = whether_aug
 
         if for_what not in ["train", "test"]:
             raise ValueError('pls ensure for_what must be "train" or "test"')
@@ -242,16 +247,21 @@ class provider(object):
 
             img, bboxes = self.__read_one_sample(img_name,label_name)
             ## resize img and normalize img and bboxes##
-            img, bboxes = train_tools.normalize_data(img, bboxes, config.img_size)
             if self.__for_what == "train":
+                if self.__whether_aug:
+                    img, bboxes = train_tools.img_aug(img, bboxes)
+                img, bboxes = train_tools.normalize_data(img, bboxes, config.img_size)
                 labels, bboxes = \
                     train_tools.ground_truth_one_img(corner_bboxes=bboxes,
                                                      priori_boxes=priori_bboxes,
-                                                     surounding_size=2,top_k=1)
+                                                     surounding_size=4,top_k=1)
 
                 ## put data into data queue ##
                 self.__data_queue.put([img, labels, bboxes])
             else:
+                if self.__whether_aug:
+                    img, bboxes = train_tools.img_aug(img, bboxes)
+                img, bboxes = train_tools.normalize_data(img, bboxes, config.img_size)
                 self.__data_queue.put([img, bboxes])
 
 

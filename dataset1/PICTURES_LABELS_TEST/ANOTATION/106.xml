@@ -1,7 +1,7 @@
-<annotation>
-	<folder>test</folder>
+<annotation verified="yes">
+	<folder>PICTURES</folder>
 	<filename>106.jpg</filename>
-	<path>F:\111\hazePerson\baseOnCNN\test\106.jpg</path>
+	<path>F:\my_project\pedestrain_detection_in_hazy\dataset1\PICTURES_LABELS_TEST\PICTURES\106.jpg</path>
 	<source>
 		<database>Unknown</database>
 	</source>

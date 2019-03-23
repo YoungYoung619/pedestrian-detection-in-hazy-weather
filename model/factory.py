@@ -89,10 +89,10 @@ class model_factory(object):
         w = tf.exp(w_t) * w_pboxes
 
         ## conner_bboxes encoded by [ymin, xmin, ymax, xmax] ##
-        ymin = y_c - h / 2
-        xmin = x_c - w / 2
-        ymax = y_c + h / 2
-        xmax = x_c + h / 2
+        ymin = y_c - h / 2.
+        xmin = x_c - w / 2.
+        ymax = y_c + h / 2.
+        xmax = x_c + w / 2.
 
         corner_bboxes = tf.stack([ymin, xmin, ymax, xmax], axis=-1)
         corner_bboxes = tf.reshape(corner_bboxes, shape=[shape[0], -1, 4])

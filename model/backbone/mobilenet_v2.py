@@ -2,6 +2,7 @@ import tensorflow as tf
 import collections
 
 weight_decay=1e-4
+keep_prob = 1.
 
 def relu(x, name='relu6'):
     return tf.nn.relu6(x, name)
@@ -26,6 +27,7 @@ def conv2d(input_, output_dim, k_h, k_w, d_h, d_w, stddev=0.02, name='conv2d', b
             biases = tf.get_variable('bias', [output_dim], initializer=tf.constant_initializer(0.0))
             conv = tf.nn.bias_add(conv, biases)
 
+        conv = tf.nn.dropout(conv, keep_prob=keep_prob)
         return conv
 
 
@@ -39,7 +41,9 @@ def conv2d_block(input, out_dim, k, s, is_train, name):
 
 def conv_1x1(input, output_dim, name, bias=False):
     with tf.name_scope(name):
-        return conv2d(input, output_dim, 1,1,1,1, stddev=0.02, name=name, bias=bias)
+        conv = conv2d(input, output_dim, 1,1,1,1, stddev=0.02, name=name, bias=bias)
+        conv = tf.nn.dropout(conv, keep_prob=keep_prob)
+        return conv
 
 
 def pwise_block(input, output_dim, is_train, name, bias=False):
@@ -62,6 +66,7 @@ def dwise_conv(input, k_h=3, k_w=3, channel_multiplier= 1, strides=[1,1,1,1],
             biases = tf.get_variable('bias', [in_channel*channel_multiplier], initializer=tf.constant_initializer(0.0))
             conv = tf.nn.bias_add(conv, biases)
 
+        conv = tf.nn.dropout(conv, keep_prob=keep_prob)
         return conv
 
 
@@ -108,6 +113,8 @@ def separable_conv(input, k_size, output_dim, stride, pad='SAME', channel_multip
         if bias:
             biases = tf.get_variable('bias', [output_dim],initializer=tf.constant_initializer(0.0))
             conv = tf.nn.bias_add(conv, biases)
+
+        conv = tf.nn.dropout(conv, keep_prob=keep_prob)
         return conv
 
 

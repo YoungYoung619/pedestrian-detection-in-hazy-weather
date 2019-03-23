@@ -1,7 +1,7 @@
 <annotation>
-	<folder>baseOnCNN</folder>
+	<folder>PICTURES</folder>
 	<filename>605.jpg</filename>
-	<path>F:\111\hazePerson\baseOnCNN\605.jpg</path>
+	<path>F:\my_project\pedestrain_detection_in_hazy\dataset1\PICTURES_LABELS_TRAIN\PICTURES\605.jpg</path>
 	<source>
 		<database>Unknown</database>
 	</source>
@@ -17,8 +17,8 @@
 		<truncated>0</truncated>
 		<difficult>0</difficult>
 		<bndbox>
-			<xmin>8</xmin>
-			<ymin>167</ymin>
+			<xmin>4</xmin>
+			<ymin>121</ymin>
 			<xmax>37</xmax>
 			<ymax>204</ymax>
 		</bndbox>
