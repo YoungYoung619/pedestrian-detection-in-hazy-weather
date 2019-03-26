@@ -1,3 +1,12 @@
+"""
+Copyright (c) College of Mechatronics and Control Engineering, Shenzhen University.
+All rights reserved.
+
+Description :
+train net
+
+Author：Team Li
+"""
 import tensorflow as tf
 import numpy as np
 import os
@@ -19,7 +28,7 @@ tf.app.flags.DEFINE_string(
     'The name of the architecture to train.')
 
 tf.app.flags.DEFINE_string(
-    'attention_module', "se_block",
+    'attention_module', "cbam_block",
     '''The name of attention module to apply.
     For prioriboxes_mbn, must be "se_block" 
     or "cbam_block"; For prioriboxes_vgg, can
@@ -38,7 +47,7 @@ tf.app.flags.DEFINE_string(
     'summary_dir', './summary/',
     'Directory where checkpoints are written to.')
 
-tf.app.flags.DEFINE_float('learning_rate', 0.0001, 'Initial learning rate.')
+tf.app.flags.DEFINE_float('learning_rate', 0.001, 'Initial learning rate.')
 
 tf.app.flags.DEFINE_integer(
     'batch_size', 50, 'The number of samples in each batch.')
@@ -155,7 +164,7 @@ def build_optimizer(det_loss, clf_loss, var_list=None):
         loss = 5*det_loss + 0.5*clf_loss
 
         # learning_rate = tf.train.exponential_decay(FLAGS.learning_rate, global_step,
-        #                                            2*config.n_data_train / FLAGS.batch_size,
+        #                                            2*70000 / FLAGS.batch_size,
         #                                            0.97, staircase=True)
 
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
@@ -168,7 +177,7 @@ def build_optimizer(det_loss, clf_loss, var_list=None):
 
         tf.summary.scalar("det_loss", det_loss)
         tf.summary.scalar("clf_loss", clf_loss)
-        #tf.summary.scalar("learning_rate", learning_rate)
+        #tf.summary.scalar("learning_rate", FLAGS.learning_rate)
         return train_ops
 
 
@@ -225,7 +234,7 @@ def main(_):
                 ## caculate average loss ##
                 step = current_step % FLAGS.f_log_step
                 avg_det_loss = (avg_det_loss * step + d_loss) / (step + 1.)
-                avg_clf_loss = (avg_clf_loss * step + c_loss) / (step + 1.)
+                avg_clf_loss = (avg_clf_loss * step + c_loss) /  (step + 1.)
                 avg_time = (avg_time * step + t) / (step + 1.)
 
                 if current_step%FLAGS.f_log_step == FLAGS.f_log_step-1:

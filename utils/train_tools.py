@@ -8,6 +8,9 @@ try:
 except Exception:
     raise ImportError("Pls install imgaug with (pip install imgaug)")
 
+import config
+
+ia.seed(1)
 
 ## a seq of img augumentation ##
 data_aug_seq = iaa.SomeOf(3,[
@@ -81,7 +84,9 @@ def img_aug(img, corner_bbox):
     image_aug = seq_det.augment_images([img])[0]
     bbs_aug = seq_det.augment_bounding_boxes([bbs])[0].remove_out_of_image().clip_out_of_image()
 
-    return image_aug, imgaugboxes_2_corner_bboxes(bbs_aug)
+    bboxes = imgaugboxes_2_corner_bboxes(bbs_aug)
+
+    return image_aug, bboxes
 
 
 def normalize_data(raw_img, corner_bbox, size=(224,224)):
@@ -125,9 +130,6 @@ def ground_truth_one_img(corner_bboxes, priori_boxes, grid_cell_size=(7, 7),
         transform_info: a ndarray with the shape (grid_h, grid_w, pboxes_num, 4)
                         represents the t_bboxes
     """
-    if grid_cell_size != (7, 7):
-        raise ValueError("if you ensure you have changed the output shape of net," +
-                         " pls delete this raise sentence, and set responding grid_cell_size ")
 
     h_per_cell = 1 / grid_cell_size[0]
     w_per_cell = 1 / grid_cell_size[1]
@@ -224,19 +226,17 @@ def ground_truth_one_img(corner_bboxes, priori_boxes, grid_cell_size=(7, 7),
 
             y_t = (y_c_gt - y_c_anchor) / h_anchor
             x_t = (x_c_gt - x_c_anchor) / w_anchor
+
+            ## sometimes imgaug would return the h_gt or w_wt 0 bboxes,
+            ## just abandom it
             try:
                 h_t = math.log(h_gt / h_anchor)
-            except ValueError:
-                print("h_gt", h_gt)
-                print("h_a",h_anchor)
-                print("h/h", h_gt / h_anchor)
-            try:
                 w_t = math.log(w_gt / w_anchor)
             except ValueError:
-                print("w_gt", w_gt)
-                print("w_a", w_anchor)
-                print("w/w", w_gt / w_anchor)
-
-            transform_info[index_info[0], index_info[1], index_info[2]] = [y_t, x_t, h_t, w_t]
-            label[index_info[0], index_info[1], index_info[2]] = 1
+                ## abandom ##
+                transform_info[index_info[0], index_info[1], index_info[2]] = [0., 0., 0., 0.]
+                label[index_info[0], index_info[1], index_info[2]] = 0
+            else:
+                transform_info[index_info[0], index_info[1], index_info[2]] = [y_t, x_t, h_t, w_t]
+                label[index_info[0], index_info[1], index_info[2]] = 1
     return label, transform_info

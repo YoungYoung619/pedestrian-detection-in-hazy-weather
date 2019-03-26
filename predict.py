@@ -1,3 +1,12 @@
+"""
+Copyright (c) College of Mechatronics and Control Engineering, Shenzhen University.
+All rights reserved.
+
+Description :
+predition
+
+Author：Team Li
+"""
 import tensorflow as tf
 import numpy as np
 import cv2
@@ -15,7 +24,7 @@ FLAGS = tf.app.flags.FLAGS
 slim = tf.contrib.slim
 
 tf.app.flags.DEFINE_string(
-    'model_name', 'prioriboxes_mbn',
+    'model_name', 'prioriboxes_vgg',
     'The name of the architecture to train.')
 
 tf.app.flags.DEFINE_string(
@@ -27,19 +36,19 @@ tf.app.flags.DEFINE_string(
     'The path to a checkpoint    from which to fine-tune.')
 
 tf.app.flags.DEFINE_float(
-    'select_threshold', 0.05, 'obj score less than it would be filter')
+    'select_threshold', 0.4, 'obj score less than it would be filter')
 
 tf.app.flags.DEFINE_float(
-    'nms_threshold', 0.4, 'nms threshold')
+    'nms_threshold', 0.6, 'nms threshold')
 
 tf.app.flags.DEFINE_integer(
-    'keep_top_k', 10, 'maximun num of obj after nms')
+    'keep_top_k', 30, 'maximun num of obj after nms')
 
 tf.app.flags.DEFINE_integer(
-    'vis_img_height', 448, 'the img height when visulize')
+    'vis_img_height', 512, 'the img height when visulize')
 
 tf.app.flags.DEFINE_integer(
-    'vis_img_width', 448, 'the img width when visulize')
+    'vis_img_width', 512, 'the img width when visulize')
 
 ## define placeholder ##
 inputs = tf.placeholder(tf.float32,
@@ -79,12 +88,12 @@ def main(_):
             tf.train.Saver().restore(sess, model_name)
             print("Load checkpoint success...")
 
-        with provider(batch_size=1, for_what="test", whether_aug=True) as pd:
+        with provider(batch_size=1, for_what="predict", whether_aug=True) as pd:
             while (True):
                 start = time()
                 # norm_imgs, labels, corner_bboxes_gt = pd.load_batch()
                 norm_imgs, corner_bboxes_gt = pd.load_batch()
-                print(corner_bboxes_gt)
+                #print(corner_bboxes_gt)
                 imgs = np.uint8((norm_imgs[0] + 1.)*255 / 2)
                 imgs_for_gt = cv2.resize(imgs, dsize=(FLAGS.vis_img_height, FLAGS.vis_img_width))
                 imgs_for_pred = imgs_for_gt.copy()

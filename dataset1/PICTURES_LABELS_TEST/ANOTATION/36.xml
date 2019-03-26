@@ -1,7 +1,7 @@
 <annotation>
-	<folder>test</folder>
+	<folder>PICTURES</folder>
 	<filename>36.jpg</filename>
-	<path>F:\111\hazePerson\baseOnCNN\test\36.jpg</path>
+	<path>F:\my_project\pedestrain_detection_in_hazy\dataset1\PICTURES_LABELS_TEST\PICTURES\36.jpg</path>
 	<source>
 		<database>Unknown</database>
 	</source>
@@ -57,6 +57,78 @@
 			<ymin>37</ymin>
 			<xmax>76</xmax>
 			<ymax>152</ymax>
+		</bndbox>
+	</object>
+	<object>
+		<name>person</name>
+		<pose>Unspecified</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>100</xmin>
+			<ymin>35</ymin>
+			<xmax>118</xmax>
+			<ymax>92</ymax>
+		</bndbox>
+	</object>
+	<object>
+		<name>person</name>
+		<pose>Unspecified</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>119</xmin>
+			<ymin>41</ymin>
+			<xmax>135</xmax>
+			<ymax>85</ymax>
+		</bndbox>
+	</object>
+	<object>
+		<name>person</name>
+		<pose>Unspecified</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>137</xmin>
+			<ymin>40</ymin>
+			<xmax>153</xmax>
+			<ymax>65</ymax>
+		</bndbox>
+	</object>
+	<object>
+		<name>person</name>
+		<pose>Unspecified</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>155</xmin>
+			<ymin>40</ymin>
+			<xmax>172</xmax>
+			<ymax>90</ymax>
+		</bndbox>
+	</object>
+	<object>
+		<name>person</name>
+		<pose>Unspecified</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>34</xmin>
+			<ymin>43</ymin>
+			<xmax>46</xmax>
+			<ymax>80</ymax>
+		</bndbox>
+	</object>
+	<object>
+		<name>person</name>
+		<pose>Unspecified</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>46</xmin>
+			<ymin>38</ymin>
+			<xmax>58</xmax>
+			<ymax>55</ymax>
 		</bndbox>
 	</object>
 </annotation>

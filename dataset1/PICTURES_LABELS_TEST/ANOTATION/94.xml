@@ -1,7 +1,7 @@
 <annotation>
-	<folder>test</folder>
+	<folder>PICTURES</folder>
 	<filename>94.jpg</filename>
-	<path>F:\111\hazePerson\baseOnCNN\test\94.jpg</path>
+	<path>F:\my_project\pedestrain_detection_in_hazy\dataset1\PICTURES_LABELS_TEST\PICTURES\94.jpg</path>
 	<source>
 		<database>Unknown</database>
 	</source>
@@ -33,6 +33,18 @@
 			<ymin>9</ymin>
 			<xmax>66</xmax>
 			<ymax>66</ymax>
+		</bndbox>
+	</object>
+	<object>
+		<name>person</name>
+		<pose>Unspecified</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>64</xmin>
+			<ymin>11</ymin>
+			<xmax>78</xmax>
+			<ymax>46</ymax>
 		</bndbox>
 	</object>
 </annotation>

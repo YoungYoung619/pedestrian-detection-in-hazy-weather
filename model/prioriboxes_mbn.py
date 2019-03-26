@@ -6,7 +6,7 @@ slim = tf.contrib.slim
 
 extract_feature_names = ['layer_7', 'layer_14', 'layer_19']
 
-def prioriboxes_mbn(inputs, attention_module, is_training, bboxs_each_cell=2, input_check=True):
+def prioriboxes_mbn(inputs, attention_module, is_training, bboxs_each_cell=2):
     """ the whole model is inspried by yolov2, what makes our model different is that
         our model use mobilenetV2 as backbone, and use different feature map to do a
         merge, and we add attention module to improve the performance.
@@ -24,10 +24,6 @@ def prioriboxes_mbn(inputs, attention_module, is_training, bboxs_each_cell=2, in
         det_out: a tensor with the shape[bs, N, 4], means [y_t, x_t, h_t, w_t]
         clf_out: a tensor with the shape[bs, N, 2], means [bg_score, obj_score]
     """
-    shape = inputs.get_shape()
-    if input_check:
-        if shape[1]!=224 or shape[2]!=224:
-            raise ValueError("inputs' height or width must be 224")
 
     end_points = mobilenetv2(inputs=inputs, is_training=is_training)
 
@@ -77,5 +73,6 @@ def prioriboxes_mbn(inputs, attention_module, is_training, bboxs_each_cell=2, in
 
 
 if __name__ == '__main__':
-    imgs = tf.placeholder(tf.float32, shape=(None, 224, 224, 3))
+    imgs = tf.placeholder(tf.float32, shape=(None, 300, 300, 3))
     a, b = prioriboxes_mbn(inputs=imgs, attention_module=se_block, is_training=True)
+    pass
