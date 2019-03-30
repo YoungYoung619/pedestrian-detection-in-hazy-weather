@@ -23,8 +23,8 @@ class model_factory(object):
         assert model_name in model_map.keys()
         assert attention_module in ["se_block", "cbam_block", None]
 
-        if model_name == "prioriboxes_mbn" and attention_module==None:
-            raise ValueError("prioriboxes_mbn must choose attention_module")
+        # if model_name == "prioriboxes_mbn" and attention_module==None:
+        #     raise ValueError("prioriboxes_mbn must choose attention_module")
 
         self.model_name = model_name
         if attention_module == "se_block":

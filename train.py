@@ -28,7 +28,7 @@ tf.app.flags.DEFINE_string(
     'The name of the architecture to train.')
 
 tf.app.flags.DEFINE_string(
-    'attention_module', "cbam_block",
+    'attention_module', None,
     '''The name of attention module to apply.
     For prioriboxes_mbn, must be "se_block" 
     or "cbam_block"; For prioriboxes_vgg, can
@@ -203,7 +203,9 @@ def main(_):
     logger.info('Total trainable parameters:%s'%
                 str(np.sum([np.prod(v.get_shape().as_list()) for v in tf.trainable_variables()])))
 
-    with tf.Session() as sess:
+    config = tf.ConfigProto()
+    config.gpu_options.allow_growth = True
+    with tf.Session(config=config) as sess:
         ## create a summary writer ##
         summary_dir = os.path.join(FLAGS.summary_dir)
         writer = tf.summary.FileWriter(FLAGS.summary_dir, sess.graph)

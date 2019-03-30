@@ -24,15 +24,15 @@ FLAGS = tf.app.flags.FLAGS
 slim = tf.contrib.slim
 
 tf.app.flags.DEFINE_string(
-    'model_name', 'prioriboxes_vgg',
+    'model_name', 'prioriboxes_mbn',
     'The name of the architecture to train.')
 
 tf.app.flags.DEFINE_string(
-    'attention_module', 'cbam_block',
+    'attention_module', None,
     'The name of attention module to apply.')
 
 tf.app.flags.DEFINE_string(
-    'checkpoint_dir', "./checkpoint",
+    'checkpoint_dir', "./checkpoint/",
     'The path to a checkpoint    from which to fine-tune.')
 
 tf.app.flags.DEFINE_float(
@@ -49,6 +49,12 @@ tf.app.flags.DEFINE_integer(
 
 tf.app.flags.DEFINE_integer(
     'compare_img_width', 224, 'the img width when compare with ground truth')
+
+tf.app.flags.DEFINE_integer(
+    'vis_img_height', 800, 'the img height when visulize')
+
+tf.app.flags.DEFINE_integer(
+    'vis_img_width', 800, 'the img width when visulize')
 
 ## define placeholder ##
 inputs = tf.placeholder(tf.float32,
@@ -80,7 +86,9 @@ def build_graph(model_name, attention_module, is_training):
 def main(_):
     scores, bboxes = build_graph(FLAGS.model_name, FLAGS.attention_module, is_training=False)
 
-    with tf.Session() as sess:
+    config = tf.ConfigProto()
+    config.gpu_options.allow_growth = True
+    with tf.Session(config=config) as sess:
         if FLAGS.checkpoint_dir ==None:
             raise ValueError("checkpoint_dir must not be None")
         else:
@@ -92,11 +100,11 @@ def main(_):
 
         while (True):
             start = time()
-            img, corner_bboxes_gt, file_name = pd.load_data_eval()
+            norm_img, corner_bboxes_gt, file_name = pd.load_data_eval()
             if file_name != None:
-                scores_pred, bboxes_pred = sess.run([scores, bboxes], feed_dict={inputs: np.array([img])})
-                img = np.uint8((img + 1.) * 255 / 2)
-                # img = cv2.resize(img, dsize=(FLAGS.vis_img_height, FLAGS.vis_img_width))
+                scores_pred, bboxes_pred = sess.run([scores, bboxes], feed_dict={inputs: np.array([norm_img])})
+                img = np.uint8((norm_img + 1.) * 255 / 2)
+                img = cv2.resize(img, dsize=(FLAGS.vis_img_height, FLAGS.vis_img_width))
 
                 scores_pred = list(scores_pred.values())
                 bboxes_pred = list(bboxes_pred.values())
@@ -109,14 +117,6 @@ def main(_):
                 bboxes_pred[:, 3] = bboxes_pred[:, 3] * FLAGS.compare_img_width
                 bboxes_pred = np.int32(bboxes_pred)
 
-                # file = open(("./forAP/pred/image_" + str(iter*10+i) + ".txt"), "w")
-                # #print(file)
-                # for index in range(len(xmin_NMS)):
-                #     string = ("person " + str(c_NMS[index]) + " " + str(xmin_NMS[index]) + " " + str(ymin_NMS[index]) + " " + str(xmax_NMS[index]) + " " + str(ymax_NMS[index]) + "\n")
-                #     #print(string)
-                #     file.write(string)
-                # file.close()
-
                 file_name = file_name.split('.')[0]
                 file_name = './evaluation/detection-results/'+file_name+'.txt'
                 file = open(file_name, "w")
@@ -127,7 +127,18 @@ def main(_):
                         file.write(string)
                 file.close()
 
-
+                # ##vis
+                # img = np.uint8((norm_img + 1.) * 255 / 2)
+                # imgs_for_gt = cv2.resize(img, dsize=(FLAGS.vis_img_height, FLAGS.vis_img_width))
+                # imgs_for_pred = imgs_for_gt.copy()
+                # corner_bboxes_gt[:, 0] = corner_bboxes_gt[:, 0] * FLAGS.vis_img_height
+                # corner_bboxes_gt[:, 1] = corner_bboxes_gt[:, 1] * FLAGS.vis_img_width
+                # corner_bboxes_gt[:, 2] = corner_bboxes_gt[:, 2] * FLAGS.vis_img_height
+                # corner_bboxes_gt[:, 3] = corner_bboxes_gt[:, 3] * FLAGS.vis_img_width
+                # corner_bboxes_gt = np.int32(corner_bboxes_gt)
+                #
+                # scores_pred, bboxes_pred = sess.run([scores, bboxes], feed_dict={inputs: np.array([norm_img])})
+                #
                 # scores_pred = list(scores_pred.values())
                 # bboxes_pred = list(bboxes_pred.values())
                 # scores_pred = scores_pred[0][0]
@@ -139,14 +150,27 @@ def main(_):
                 # bboxes_pred[:, 3] = bboxes_pred[:, 3] * FLAGS.vis_img_width
                 # bboxes_pred = np.int32(bboxes_pred)
                 #
-                # for bbox in bboxes_pred:
-                #     if bbox.any() != 0:
-                #         cv2.rectangle(img, (bbox[1],bbox[0]), (bbox[3],bbox[2]),
-                #                       thickness=2, color=(0,0,255))
+                # ## vis ##
+                # imgs_for_gt = cv2.cvtColor(imgs_for_gt, cv2.COLOR_BGR2RGB)
+                # imgs_for_pred = cv2.cvtColor(imgs_for_pred, cv2.COLOR_BGR2RGB)
+                # label = np.ones(corner_bboxes_gt.shape[0], dtype=np.int32)
+                # imgs_for_gt = test_tools.visualize_boxes_and_labels_on_image_array(imgs_for_gt, corner_bboxes_gt, label,
+                #                                                                    None, config.category_index,
+                #                                                                    skip_labels=False)
                 #
-                # cv2.imshow("pred", img)
-                # cv2.waitKey(0)
-                # cv2.destroyAllWindows()
+                # label = np.ones(bboxes_pred.shape[0], dtype=np.int32)
+                # imgs_for_pred = test_tools.visualize_boxes_and_labels_on_image_array(imgs_for_pred, bboxes_pred, label,
+                #                                                                      scores_pred, config.category_index,
+                #                                                                      skip_labels=False)
+                # imgs_for_gt = cv2.cvtColor(imgs_for_gt, cv2.COLOR_RGB2BGR)
+                # imgs_for_pred = cv2.cvtColor(imgs_for_pred, cv2.COLOR_RGB2BGR)
+                #
+                # # cv2.imshow("gt", imgs_for_gt)
+                # # cv2.imshow("pred", imgs_for_pred)
+                # filename = './prediction_imgs/' + file_name
+                # cv2.imwrite(filename, imgs_for_pred)
+                # # cv2.waitKey(0)
+                # # cv2.destroyAllWindows()
 
                 pass
             else:

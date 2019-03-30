@@ -3,6 +3,10 @@ some configuration set here
 """
 import numpy as np
 
+
+category_index = {0: {"name": "Background"},
+                  1: {"name": "Person"}}
+
 """this priori bboxes are produced by k-means,
 encoded by [height, width]
 """
