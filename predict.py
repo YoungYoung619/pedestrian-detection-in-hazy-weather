@@ -24,15 +24,15 @@ FLAGS = tf.app.flags.FLAGS
 slim = tf.contrib.slim
 
 tf.app.flags.DEFINE_string(
-    'model_name', 'prioriboxes_mbn',
+    'model_name', None,
     'The name of the architecture to train.')
 
 tf.app.flags.DEFINE_string(
-    'attention_module', 'se_block',
+    'attention_module', None,
     'The name of attention module to apply.')
 
 tf.app.flags.DEFINE_string(
-    'checkpoint', 'checkpoint/prioriboxes_mbn.model',
+    'checkpoint', None,
     'The full file name to a checkpoint from which to fine-tune.')
 
 tf.app.flags.DEFINE_float(
@@ -52,15 +52,15 @@ tf.app.flags.DEFINE_integer(
 
 #### config only for prioriboxes_mbn ####
 tf.app.flags.DEFINE_string(
-    'backbone_name', 'mobilenet_v2',
+    'backbone_name', None,
     'support mobilenet_v1 and mobilenet_v2')
 
 tf.app.flags.DEFINE_boolean(
-    'multiscale_feats', True,
+    'multiscale_feats', None,
     'whether merge different scale features')
 
 tf.app.flags.DEFINE_boolean(
-    'whether_aug', True,
+    'whether_aug', None,
     'whether use augmentation to prediction')
 
 ## define placeholder ##

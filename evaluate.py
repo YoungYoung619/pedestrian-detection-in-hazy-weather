@@ -24,7 +24,7 @@ FLAGS = tf.app.flags.FLAGS
 slim = tf.contrib.slim
 
 tf.app.flags.DEFINE_string(
-    'model_name', 'prioriboxes_mbn',
+    'model_name', None,
     'The name of the architecture to train.')
 
 tf.app.flags.DEFINE_string(
@@ -32,7 +32,7 @@ tf.app.flags.DEFINE_string(
     'The name of attention module to apply.')
 
 tf.app.flags.DEFINE_string(
-    'checkpoint_dir', "./checkpoint/",
+    'checkpoint_dir', None,
     'The path to a checkpoint    from which to fine-tune.')
 
 tf.app.flags.DEFINE_float(
