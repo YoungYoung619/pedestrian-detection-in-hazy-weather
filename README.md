@@ -4,7 +4,7 @@ Traffic environments are constantly changing with fluctuating weather, driving, 
 
 ## Approaches
 We used mobilenet_v2 as backbone(Code also supports mobilenet_v1), and then proposed a layer called weighted combination to improve the performance of model. The weighted combination layer would combine feature maps from different convoutional layer, and then vis an attention module to recalibrating the feature map through learning weights in each channel(["Squeeze-and-Excitation Networks"](https://arxiv.org/pdf/1709.01507)) or both channel and spatial(["CBAM: Convolutional Block Attention Module"](https://arxiv.org/pdf/1807.06521.pdf)), following figure show the whole network architecture.
-<div align=center><img src="pictures/structure.png"></div>
+<div align=center><img width="800" height="460" src="pictures/structure.png"></div>
 
 ## Evaluation
 We used the average precision(AP) to evaluate our model, the AP for pedestrian would be calculated by using the mAP criterium defined in the PASCAL VOC 2012 competition, of which the tools were from [here](https://github.com/Cartucho/mAP). The following fugure show the PR curve of our model.
