@@ -277,7 +277,7 @@ def main(_):
                 tf.train.Saver(tf.global_variables()).save(sess, model_name)
                 logger.info('Save model sucess...')
 
-            if not FLAGS.training_step:
+            if FLAGS.training_step != None:
                 if current_step >= FLAGS.training_step:
                     logger.info('Exit training...')
                     break
