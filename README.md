@@ -25,3 +25,12 @@ when --model_name == prioriboxes_mbn, we colud choose backbone and config the we
 --backbone_name = mobilenet_v2 or mobilener_v1
 --multiscale_feats = True or False
 ```
+
+### Prediction
+The job of prediction is to visualize the detection, Below script gives you an example of doing prediction after training a model.
+```
+CHECKPOINT_FULL_NAME=/DIRECTORY/CHECKPOINT/MODEL_NAME
+python predict.py --model_name=prioriboxes_mbn --attention_module=se_block --backone_name=mobilenet_v2 --multiscale_feats=True --whether_aug=True --checkpoint=CHECKPOINT_FULL_NAME
+```
+
+### Evaluation
