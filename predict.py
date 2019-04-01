@@ -16,6 +16,7 @@ from time import time
 from model.factory import model_factory
 from dataset.hazy_person import provider
 import utils.test_tools as test_tools
+from utils.logging import logger
 
 import config
 
@@ -108,6 +109,7 @@ def main(_):
             print("Load checkpoint success...")
 
         pd = provider(batch_size=1, for_what="predict", whether_aug=FLAGS.whether_aug)
+        logger.info("Please press any key to skip picture...")
         while (True):
             # start = time()
             # norm_imgs, labels, corner_bboxes_gt = pd.load_batch()
