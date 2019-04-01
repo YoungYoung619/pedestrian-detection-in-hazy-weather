@@ -31,52 +31,52 @@ def prioriboxes_mbn(inputs, attention_module, is_training, config_dict, bboxs_ea
     else:
         end_points = mobilenet_v1(inputs=inputs, is_training=is_training)
 
-    if config_dict['multiscale_feats']:
-        with tf.variable_scope('merge_feat'):
+    with tf.variable_scope('merge_feat'):
+        if config_dict['multiscale_feats']:
             h = []
             for ex_feat_name in extract_feature_names[config_dict['backbone']]:
                 h.append(end_points[ex_feat_name].get_shape()[1])
-        feats = []
-        for i,ex_feat_name in enumerate(extract_feature_names[config_dict['backbone']]):
-            with slim.arg_scope([slim.conv2d],
-                                weights_regularizer=tf.contrib.layers.l2_regularizer(1e-4),
-                                activation_fn=None):
-                ex_feat = end_points[ex_feat_name]
-                if i < len(extract_feature_names[config_dict['backbone']])-1:
-                    ex_feat = slim.conv2d(ex_feat, ex_feat.get_shape()[3] // 2, [1, 1])
-                else:
-                    ex_feat = slim.conv2d(ex_feat, ex_feat.get_shape()[3] // 4, [1, 1])
-                ex_feat = slim.batch_norm(ex_feat, is_training=is_training, activation_fn=tf.nn.leaky_relu)
-                if i < len(extract_feature_names[config_dict['backbone']])-1:
-                    ex_feat = tf.space_to_depth(ex_feat, block_size=h[i]//h[-1])
-                if attention_module != None:
-                    ex_feat = attention_module(ex_feat, name="block%d"%(i))
-                feats.append(ex_feat)
+            feats = []
+            for i,ex_feat_name in enumerate(extract_feature_names[config_dict['backbone']]):
+                with slim.arg_scope([slim.conv2d],
+                                    weights_regularizer=tf.contrib.layers.l2_regularizer(1e-4),
+                                    activation_fn=None):
+                    ex_feat = end_points[ex_feat_name]
+                    if i < len(extract_feature_names[config_dict['backbone']])-1:
+                        ex_feat = slim.conv2d(ex_feat, ex_feat.get_shape()[3] // 2, [1, 1])
+                    else:
+                        ex_feat = slim.conv2d(ex_feat, ex_feat.get_shape()[3] // 4, [1, 1])
+                    ex_feat = slim.batch_norm(ex_feat, is_training=is_training, activation_fn=tf.nn.leaky_relu)
+                    if i < len(extract_feature_names[config_dict['backbone']])-1:
+                        ex_feat = tf.space_to_depth(ex_feat, block_size=h[i]//h[-1])
+                    if attention_module != None:
+                        ex_feat = attention_module(ex_feat, name="block%d"%(i))
+                    feats.append(ex_feat)
 
-        merge_feat = tf.concat(feats, axis=-1) #feature after merge#
-        net = merge_feat
-    else:
-        net = list(end_points.values())[-1]
+            merge_feat = tf.concat(feats, axis=-1) #feature after merge#
+            net = merge_feat
+        else:
+            net = list(end_points.values())[-1]
 
-    ## the additional conv layers##
-    with tf.variable_scope("clf_det_layers"):
-        # each bboxs need 6 attribute to describe, means [y_t, x_t, h_t, w_t, bg_socre, obj_score]
-        conv_channel_config = [512, 256, 128, 64, 32, bboxs_each_cell * 6]
-        for channel in conv_channel_config:
-            with slim.arg_scope([slim.conv2d],
-                                weights_regularizer=tf.contrib.layers.l2_regularizer(1e-4),
-                                activation_fn=None):
-                net = slim.conv2d(net, channel, [1, 1])
-                net = slim.batch_norm(net, is_training=is_training, activation_fn=tf.nn.leaky_relu)
-                net = slim.conv2d(net, channel, [3, 3])
-                net = slim.batch_norm(net, is_training=is_training, activation_fn=tf.nn.leaky_relu)
+        ## the additional conv layers##
+        with tf.variable_scope("clf_det_layers"):
+            # each bboxs need 6 attribute to describe, means [y_t, x_t, h_t, w_t, bg_socre, obj_score]
+            conv_channel_config = [512, 256, 128, 64, 32, bboxs_each_cell * 6]
+            for channel in conv_channel_config:
+                with slim.arg_scope([slim.conv2d],
+                                    weights_regularizer=tf.contrib.layers.l2_regularizer(1e-4),
+                                    activation_fn=None):
+                    net = slim.conv2d(net, channel, [1, 1])
+                    net = slim.batch_norm(net, is_training=is_training, activation_fn=tf.nn.leaky_relu)
+                    net = slim.conv2d(net, channel, [3, 3])
+                    net = slim.batch_norm(net, is_training=is_training, activation_fn=tf.nn.leaky_relu)
 
-        net = slim.batch_norm(net, is_training=is_training, activation_fn=None)
-        net = tf.reshape(net,shape=[tf.shape(inputs)[0], -1, 6])
-        sz = tf.shape(net)
-        det_out = tf.slice(net, begin=[0,0,0], size=[sz[0],sz[1],4]) #[y_t, x_t, h_t, w_t]
-        clf_out = tf.slice(net, begin=[0,0,4], size=[sz[0],sz[1],2]) #[bg_socre, obj_score]
-    return det_out, clf_out
+            net = slim.batch_norm(net, is_training=is_training, activation_fn=None)
+            net = tf.reshape(net,shape=[tf.shape(inputs)[0], -1, 6])
+            sz = tf.shape(net)
+            det_out = tf.slice(net, begin=[0,0,0], size=[sz[0],sz[1],4]) #[y_t, x_t, h_t, w_t]
+            clf_out = tf.slice(net, begin=[0,0,4], size=[sz[0],sz[1],2]) #[bg_socre, obj_score]
+        return det_out, clf_out
 
 
 if __name__ == '__main__':

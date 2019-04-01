@@ -28,12 +28,12 @@ tf.app.flags.DEFINE_string(
     'The name of the architecture to train.')
 
 tf.app.flags.DEFINE_string(
-    'attention_module', None,
+    'attention_module', 'se_block',
     'The name of attention module to apply.')
 
 tf.app.flags.DEFINE_string(
-    'checkpoint_dir', './checkpoint',
-    'The path to a checkpoint from which to fine-tune.')
+    'checkpoint', 'checkpoint/prioriboxes_mbn.model',
+    'The full file name to a checkpoint from which to fine-tune.')
 
 tf.app.flags.DEFINE_float(
     'select_threshold', 0.3, 'obj score less than it would be filter')
@@ -45,19 +45,23 @@ tf.app.flags.DEFINE_integer(
     'keep_top_k', 30, 'maximun num of obj after nms')
 
 tf.app.flags.DEFINE_integer(
-    'vis_img_height', 800, 'the img height when visulize')
+    'vis_img_height', 512, 'the img height when visulize')
 
 tf.app.flags.DEFINE_integer(
-    'vis_img_width', 800, 'the img width when visulize')
+    'vis_img_width', 512, 'the img width when visulize')
 
 #### config only for prioriboxes_mbn ####
 tf.app.flags.DEFINE_string(
-    'backbone_name', None,
+    'backbone_name', 'mobilenet_v2',
     'support mobilenet_v1 and mobilenet_v2')
 
 tf.app.flags.DEFINE_boolean(
-    'multiscale_feats', None,
+    'multiscale_feats', True,
     'whether merge different scale features')
+
+tf.app.flags.DEFINE_boolean(
+    'whether_aug', True,
+    'whether use augmentation to prediction')
 
 ## define placeholder ##
 inputs = tf.placeholder(tf.float32,
@@ -97,14 +101,13 @@ def main(_):
     configuretion = tf.ConfigProto()
     configuretion.gpu_options.allow_growth = True
     with tf.Session(config=configuretion) as sess:
-        if FLAGS.checkpoint_dir ==None:
+        if FLAGS.checkpoint ==None:
             raise ValueError("checkpoint_dir must not be None")
         else:
-            model_name = os.path.join(FLAGS.checkpoint_dir, FLAGS.model_name+".model")
-            tf.train.Saver().restore(sess, model_name)
+            tf.train.Saver().restore(sess, FLAGS.checkpoint)
             print("Load checkpoint success...")
 
-        pd = provider(batch_size=1, for_what="predict", whether_aug=True)
+        pd = provider(batch_size=1, for_what="predict", whether_aug=FLAGS.whether_aug)
         while (True):
             # start = time()
             # norm_imgs, labels, corner_bboxes_gt = pd.load_batch()
@@ -148,8 +151,8 @@ def main(_):
             imgs_for_pred = cv2.cvtColor(imgs_for_pred, cv2.COLOR_RGB2BGR)
 
 
-            cv2.imshow("gt", imgs_for_gt)
-            cv2.imshow("pred", imgs_for_pred)
+            cv2.imshow("ground-truth", imgs_for_gt)
+            cv2.imshow("prediction", imgs_for_pred)
             cv2.waitKey(0)
             cv2.destroyAllWindows()
             pass
