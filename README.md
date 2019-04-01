@@ -7,14 +7,14 @@ We used mobilenet_v2 as backbone(Code also supports mobilenet_v1), and then prop
 <div align=center><img src="pictures/structure.png"></div>
 
 ## Evaluation
-We used the average precision(AP) to evaluate our model, the AP for pedestrian would be calculated by using the mAP criterium defined in the PASCAL VOC 2012 competition, of which the tools were from [here](https://github.com/Cartucho/mAP). The following fugure show the PR curve of our model.
+We used the average precision(AP) to evaluate our model, the AP for pedestrian would be calculated by using the mAP criterium defined in the [PASCAL VOC 2012 competition](http://host.robots.ox.ac.uk/pascal/VOC/voc2012/)., of which the tools were from [here](https://github.com/Cartucho/mAP). The following fugure show the PR curve of our model.
 <div align=center><img width="400" height="288" src="pictures/pbmn.png"></div>
 
 ## How to use code
 ### Training
 Below script gives you an example of training a model with our models.
 ```
-python train.py --model_name=prioriboxes_mbn --attention_module=se_block --batch_size=50 --learning_rate=1e-3
+python train.py --model_name=prioriboxes_mbn --attention_module=se_block --batch_size=50 --learning_rate=1e-3 --f_log_step=20 --f_summary_step=20 --f_save_step=2000
 ```
 Actually, our code supports multiple network configurations, below script show you some different network configurations.
 ```
