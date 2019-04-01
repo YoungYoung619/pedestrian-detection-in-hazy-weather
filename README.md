@@ -14,7 +14,7 @@ We used the average precision(AP) to evaluate our model, the AP for pedestrian w
 ### Training
 Below script gives you an example of training a model with our models.
 ```
-python train.py --model_name=prioriboxes_mbn --attention_module=se_block --batch_size=50 --learning_rate=1e-3
+python train.py --model_name=prioriboxes_mbn --attention_module=se_block --batch_size=50 --learning_rate=1e-3 --f_log_step=20 --f_summary_step=20 --f_save_step=2000
 ```
 Actually, our code supports multiple network configurations, below script show you some different network configurations.
 ```
