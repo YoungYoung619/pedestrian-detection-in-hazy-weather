@@ -34,10 +34,12 @@ python predict.py --model_name=prioriboxes_mbn --attention_module=se_block --bac
 ```
 
 ### Evaluation
-Below script gives you an example of evaluating a model after our training.
+Below script gives you an example of evaluating a model after training.
 ```
 CHECKPOINT_FULL_NAME=/DIRECTORY/CHECKPOINT/MODEL_NAME
 1. python evaluate.py --model_name=prioriboxes_mbn --attention_module=se_block --backone_name=mobilenet_v2 --whether_aug=True --checkpoint=CHECKPOINT_FULL_NAME
 2. cd evaluation
 3. python eval_tools.py
 ```
+###Pre-train Model
+##to do
