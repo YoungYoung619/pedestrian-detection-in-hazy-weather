@@ -66,7 +66,7 @@ tf.app.flags.DEFINE_integer(
 
 tf.app.flags.DEFINE_integer(
     'training_step', None,
-    'Total step of training.')
+    'when training step bigger than training_step, training would stop')
 
 #### config only for prioriboxes_mbn ####
 tf.app.flags.DEFINE_string(
@@ -75,7 +75,7 @@ tf.app.flags.DEFINE_string(
 
 tf.app.flags.DEFINE_boolean(
     'multiscale_feats', True,
-    'whether merge different scale features')
+    'whether combine different scale features')
 
 
 FLAGS = tf.app.flags.FLAGS
