@@ -8,4 +8,4 @@ We used mobilenet_v2 as backbone(Code also supports mobilenet_v1), and then prop
 
 ## Evaluation
 We used the average precision(AP) to evaluate our model, the AP for pedestrian would be calculated by using the mAP criterium defined in the PASCAL VOC 2012 competition, of which the tools were from [here](https://github.com/Cartucho/mAP). The following fugure show the PR curve of our model.
-<div align=center><img width="300" height="300" src="pictures/pbmn.png"></div>
+<div align=center><img width="400" height="288" src="pictures/pbmn.png"></div>
