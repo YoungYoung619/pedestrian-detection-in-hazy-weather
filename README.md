@@ -42,4 +42,4 @@ CHECKPOINT_FULL_NAME=/DIRECTORY/CHECKPOINT/MODEL_NAME
 3. python eval_tools.py
 ```
 ### Pre-train Model
-#### to do
+[prioriboxes_mbn](https://drive.google.com/open?id=1UOF1ACYA3Nn5K_RjoItOUFSxnFL6sNOg)
