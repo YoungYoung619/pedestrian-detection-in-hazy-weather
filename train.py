@@ -50,7 +50,7 @@ tf.app.flags.DEFINE_string(
 tf.app.flags.DEFINE_float('learning_rate', 1e-3, 'Initial learning rate.')
 
 tf.app.flags.DEFINE_integer(
-    'batch_size', 50, 'The number of samples in each batch.')
+    'batch_size', None, 'The number of samples in each batch.')
 
 tf.app.flags.DEFINE_integer(
     'f_log_step', 20,
@@ -236,47 +236,48 @@ def main(_):
             tf.train.Saver().restore(sess, model_name)
             logger.info('Load checkpoint success...')
 
-        with provider(batch_size=FLAGS.batch_size, for_what='train', whether_aug=True) as pd:
-            avg_det_loss = 0.
-            avg_clf_loss = 0.
-            avg_time = 0.
-            while(True):
-                start = time()
-                imgs, labels, t_bboex = pd.load_batch()
-                imgs = np.array(imgs)
-                labels = np.reshape(np.array(labels), newshape=[FLAGS.batch_size, -1, 1])
-                t_bboex = np.reshape(np.array(t_bboex), newshape=[FLAGS.batch_size, -1, 4])
-                t_ops, m_ops, current_step, d_loss, c_loss \
-                    =sess.run([train_ops, merge_ops, global_step, det_loss, clf_loss],
-                              feed_dict={inputs: imgs, label_gt: labels, bboxes_gt:t_bboex})
-                t = round(time() - start, 3)
+        pd = provider(batch_size=FLAGS.batch_size, for_what='train', whether_aug=True)
+        avg_det_loss = 0.
+        avg_clf_loss = 0.
+        avg_time = 0.
+        while(True):
+            start = time()
+            imgs, labels, t_bboex = pd.load_batch()
+            imgs = np.array(imgs)
+            labels = np.reshape(np.array(labels), newshape=[FLAGS.batch_size, -1, 1])
+            t_bboex = np.reshape(np.array(t_bboex), newshape=[FLAGS.batch_size, -1, 4])
+            t_ops, m_ops, current_step, d_loss, c_loss \
+                =sess.run([train_ops, merge_ops, global_step, det_loss, clf_loss],
+                            feed_dict={inputs: imgs, label_gt: labels, bboxes_gt:t_bboex})
+            t = round(time() - start, 3)
 
-                ## caculate average loss ##
-                step = current_step % FLAGS.f_log_step
-                avg_det_loss = (avg_det_loss * step + d_loss) / (step + 1.)
-                avg_clf_loss = (avg_clf_loss * step + c_loss) /  (step + 1.)
-                avg_time = (avg_time * step + t) / (step + 1.)
+            ## caculate average loss ##
+            step = current_step % FLAGS.f_log_step
+            avg_det_loss = (avg_det_loss * step + d_loss) / (step + 1.)
+            avg_clf_loss = (avg_clf_loss * step + c_loss) /  (step + 1.)
+            avg_time = (avg_time * step + t) / (step + 1.)
 
-                if current_step%FLAGS.f_log_step == FLAGS.f_log_step-1:
-                    ## print info ##
-                    logger.info('Step%s det_loss:%s clf_loss:%s time:%s'%(str(current_step),
-                                                                          str(avg_det_loss),
-                                                                          str(avg_clf_loss),
-                                                                          str(avg_time)))
-                    avg_det_loss = 0.
-                    avg_clf_loss = 0.
+            if current_step%FLAGS.f_log_step == FLAGS.f_log_step-1:
+                ## print info ##
+                logger.info('Step%s det_loss:%s clf_loss:%s time:%s'%(str(current_step),
+                                                                        str(avg_det_loss),
+                                                                        str(avg_clf_loss),
+                                                                        str(avg_time)))
+                avg_det_loss = 0.
+                avg_clf_loss = 0.
 
-                if current_step%FLAGS.f_summary_step == FLAGS.f_summary_step-1:
-                    ## summary ##
-                    writer.add_summary(m_ops, current_step)
+            if current_step%FLAGS.f_summary_step == FLAGS.f_summary_step-1:
+                ## summary ##
+                writer.add_summary(m_ops, current_step)
 
-                if current_step%FLAGS.f_save_step == FLAGS.f_save_step-1:
-                    ## save model ##
-                    logger.info('Saving model...')
-                    model_name = os.path.join(FLAGS.train_dir,FLAGS.model_name+'.model')
-                    tf.train.Saver(tf.global_variables()).save(sess, model_name)
-                    logger.info('Save model sucess...')
+            if current_step%FLAGS.f_save_step == FLAGS.f_save_step-1:
+                ## save model ##
+                logger.info('Saving model...')
+                model_name = os.path.join(FLAGS.train_dir,FLAGS.model_name+'.model')
+                tf.train.Saver(tf.global_variables()).save(sess, model_name)
+                logger.info('Save model sucess...')
 
+            if not FLAGS.training_step:
                 if current_step >= FLAGS.training_step:
                     logger.info('Exit training...')
                     break
