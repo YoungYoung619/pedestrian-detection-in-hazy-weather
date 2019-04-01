@@ -13,7 +13,7 @@ import os
 from time import time
 
 from model.factory import model_factory
-from dataset1.hazy_person import provider
+from dataset.hazy_person import provider
 import config
 
 import logging
@@ -31,7 +31,7 @@ tf.app.flags.DEFINE_string(
     'attention_module', None,
     '''The name of attention module to apply.
     For prioriboxes_mbn, must be "se_block" 
-    or "cbam_block"; For prioriboxes_vgg, can
+    , "cbam_block" or None; For prioriboxes_vgg, must
     be None
     ''')
 
@@ -47,7 +47,7 @@ tf.app.flags.DEFINE_string(
     'summary_dir', './summary/',
     'Directory where checkpoints are written to.')
 
-tf.app.flags.DEFINE_float('learning_rate', 0.001, 'Initial learning rate.')
+tf.app.flags.DEFINE_float('learning_rate', 1e-3, 'Initial learning rate.')
 
 tf.app.flags.DEFINE_integer(
     'batch_size', 50, 'The number of samples in each batch.')
@@ -63,6 +63,20 @@ tf.app.flags.DEFINE_integer(
 tf.app.flags.DEFINE_integer(
     'f_save_step', 2000,
     'The frequency with which summaries are saved, in step.')
+
+tf.app.flags.DEFINE_integer(
+    'training_step', None,
+    'Total step of training.')
+
+#### config only for prioriboxes_mbn ####
+tf.app.flags.DEFINE_string(
+    'backbone_name', 'mobilenet_v2',
+    'support mobilenet_v1 and mobilenet_v2')
+
+tf.app.flags.DEFINE_boolean(
+    'multiscale_feats', True,
+    'whether merge different scale features')
+
 
 FLAGS = tf.app.flags.FLAGS
 
@@ -80,11 +94,12 @@ label_gt = tf.placeholder(tf.int32,
 global_step = tf.Variable(0, trainable=False, name='global_step')
 
 
-def build_graph(model_name, attention_module, is_training):
+def build_graph(model_name, attention_module, config_dict, is_training):
     """build tf graph
     Args:
         model_name: choose a model to build
         attention_module: must be "se_block" or "cbam_block"
+        config_dict: some config for building net.
         is_training: whether to train or test
     Return:
         det_loss: a tensor with a shape [bs, priori_boxes_num, 4]
@@ -104,7 +119,7 @@ def build_graph(model_name, attention_module, is_training):
         return r
 
     net = model_factory(inputs=inputs, model_name=model_name,
-                        attention_module=attention_module, is_training=is_training)
+                        attention_module=attention_module, is_training=is_training, config_dict=config_dict)
     bboxes_pred, logits_pred = net.get_output_for_train()
 
     with tf.name_scope("clf_loss_process"):
@@ -192,8 +207,11 @@ def main(_):
 
     ## build graph ##
     logger.info('Building graph, using %s...'%(FLAGS.model_name))
+    config_dict = {'multiscale_feats': FLAGS.multiscale_feats,
+                   'backbone': FLAGS.backbone_name}
     det_loss, clf_loss = build_graph(model_name=FLAGS.model_name,
-                                     attention_module=FLAGS.attention_module, is_training=True)
+                                     attention_module=FLAGS.attention_module, is_training=True,
+                                     config_dict=config_dict)
     ## build optimizer ##
     train_ops = build_optimizer(det_loss, clf_loss)
 
@@ -254,10 +272,14 @@ def main(_):
 
                 if current_step%FLAGS.f_save_step == FLAGS.f_save_step-1:
                     ## save model ##
-                    print('Saving model...')
+                    logger.info('Saving model...')
                     model_name = os.path.join(FLAGS.train_dir,FLAGS.model_name+'.model')
                     tf.train.Saver(tf.global_variables()).save(sess, model_name)
-                    print('Save model sucess...')
+                    logger.info('Save model sucess...')
+
+                if current_step >= FLAGS.training_step:
+                    logger.info('Exit training...')
+                    break
 
 
 if __name__ == '__main__':

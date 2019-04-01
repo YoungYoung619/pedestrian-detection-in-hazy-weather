@@ -8,7 +8,7 @@ slim = tf.contrib.slim
 extract_feature_names = {'mobilenet_v2':['layer_7', 'layer_14', 'layer_19'],
                          'mobilenet_v1':['Conv2d_4_pointwise','Conv2d_8_pointwise','Conv2d_13_pointwise']}
 
-def prioriboxes_mbn(inputs, attention_module, is_training, msf=False, bboxs_each_cell=2, backbone='mobilenet_v1'):
+def prioriboxes_mbn(inputs, attention_module, is_training, config_dict, bboxs_each_cell=2):
     """ the whole model is inspried by yolov2, what makes our model different is that
         our model use mobilenetV2 as backbone, and use different feature map to do a
         merge, and we add attention module to improve the performance.
@@ -25,29 +25,29 @@ def prioriboxes_mbn(inputs, attention_module, is_training, msf=False, bboxs_each
         det_out: a tensor with the shape[bs, N, 4], means [y_t, x_t, h_t, w_t]
         clf_out: a tensor with the shape[bs, N, 2], means [bg_score, obj_score]
     """
-    assert backbone in ['mobilenet_v2', 'mobilenet_v1']
-    if backbone == 'mobilenet_v2':
+    assert config_dict['backbone'] in ['mobilenet_v2', 'mobilenet_v1']
+    if config_dict['backbone'] == 'mobilenet_v2':
         end_points = mobilenetv2(inputs=inputs, is_training=is_training)
     else:
         end_points = mobilenet_v1(inputs=inputs, is_training=is_training)
 
-    if msf:
+    if config_dict['multiscale_feats']:
         with tf.variable_scope('merge_feat'):
             h = []
-            for ex_feat_name in extract_feature_names:
+            for ex_feat_name in extract_feature_names[config_dict['backbone']]:
                 h.append(end_points[ex_feat_name].get_shape()[1])
         feats = []
-        for i,ex_feat_name in enumerate(extract_feature_names):
+        for i,ex_feat_name in enumerate(extract_feature_names[config_dict['backbone']]):
             with slim.arg_scope([slim.conv2d],
                                 weights_regularizer=tf.contrib.layers.l2_regularizer(1e-4),
                                 activation_fn=None):
                 ex_feat = end_points[ex_feat_name]
-                if i < len(extract_feature_names)-1:
+                if i < len(extract_feature_names[config_dict['backbone']])-1:
                     ex_feat = slim.conv2d(ex_feat, ex_feat.get_shape()[3] // 2, [1, 1])
                 else:
                     ex_feat = slim.conv2d(ex_feat, ex_feat.get_shape()[3] // 4, [1, 1])
                 ex_feat = slim.batch_norm(ex_feat, is_training=is_training, activation_fn=tf.nn.leaky_relu)
-                if i < len(extract_feature_names)-1:
+                if i < len(extract_feature_names[config_dict['backbone']])-1:
                     ex_feat = tf.space_to_depth(ex_feat, block_size=h[i]//h[-1])
                 if attention_module != None:
                     ex_feat = attention_module(ex_feat, name="block%d"%(i))
@@ -80,6 +80,8 @@ def prioriboxes_mbn(inputs, attention_module, is_training, msf=False, bboxs_each
 
 
 if __name__ == '__main__':
-    imgs = tf.placeholder(tf.float32, shape=(None, 300, 300, 3))
-    a, b = prioriboxes_mbn(inputs=imgs, attention_module=se_block, is_training=True)
+    imgs = tf.placeholder(tf.float32, shape=(None, 224, 224, 3))
+    config_dict = {'multiscale_feats':True,
+                   'backbone':'mobilenet_v1'}
+    a, b = prioriboxes_mbn(inputs=imgs, attention_module=se_block, is_training=True, config_dict=config_dict)
     pass

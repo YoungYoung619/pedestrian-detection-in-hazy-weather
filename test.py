@@ -28,7 +28,7 @@ import imgaug as ia
 from imgaug import augmenters as iaa
 import numpy as np
 
-from dataset1.hazy_person import provider
+from dataset.hazy_person import provider
 
 import cv2
 
@@ -126,7 +126,7 @@ import cv2
 # import glob
 # import cv2
 #
-# pic_train_dir_str = "dataset1/PICTURES_LABELS_TEMP_TEST/PICTURES/"
+# pic_train_dir_str = "dataset/PICTURES_LABELS_TEMP_TEST/PICTURES/"
 # # pic_train_dir_str = "g:/111/hazePerson/baseOnCNN/test/"
 # data_root = os.path.dirname(__file__)
 # match = os.path.join(data_root, pic_train_dir_str + "*.jpeg")
@@ -261,8 +261,8 @@ import cv2
 #     labels = np.stack(labels, axis=0)
 #     return img, labels
 #
-# img_name = 'F:\my_project\pedestrain_detection_in_hazy\dataset1\PICTURES_LABELS_TRAIN\PICTURES/743.jpg'
-# anatation_name = 'F:\my_project\pedestrain_detection_in_hazy\dataset1\PICTURES_LABELS_TRAIN\ANOTATION/743.xml'
+# img_name = 'F:\my_project\pedestrain_detection_in_hazy\dataset\PICTURES_LABELS_TRAIN\PICTURES/743.jpg'
+# anatation_name = 'F:\my_project\pedestrain_detection_in_hazy\dataset\PICTURES_LABELS_TRAIN\ANOTATION/743.xml'
 #
 # img, bboxes = read_one_sample(img_name, anatation_name)
 # img, bboxes = train_tools.normalize_data(img, bboxes, (800, 800))
@@ -316,3 +316,8 @@ import cv2
 # plt.axis('on') # 关掉坐标轴为 off
 # plt.title('image') # 图像题目
 # plt.show()
+
+import os
+
+os.system("E:\Anaconda3\python.exe F:/my_project/pedestrain_detection_in_hazy/evaluation/eval_tools.py")
+

@@ -264,7 +264,8 @@ def draw_plot_func(dictionary, n_classes, window_title, plot_title, x_label, out
   fig.savefig(output_path)
   # show image
   if to_show:
-    plt.show()
+    #plt.show()
+    pass
   # close the plot
   plt.close()
 
@@ -582,7 +583,7 @@ with open(results_files_path + "/results.txt", 'w') as results_file:
 
     ap, mrec, mprec = voc_ap(rec, prec)
     sum_AP += ap
-    text = " AP: "+"{0:.2f}%".format(ap*100) #class_name + " AP = {0:.2f}%".format(ap*100)
+    text = " AP: "+"{0:.1f}%".format(ap*100) #class_name + " AP = {0:.2f}%".format(ap*100)
     """
      Write to results.txt
     """
@@ -597,6 +598,8 @@ with open(results_files_path + "/results.txt", 'w') as results_file:
      Draw plot
     """
     if draw_plot:
+      plt.figure(figsize=(8, 12))
+      plt.subplot(211)
       plt.plot(rec, prec, '-o')
       # add a new penultimate point to the list (mrec[-2], 0.0)
       # since the last line segment (and respective area) do not affect the AP value
@@ -607,21 +610,23 @@ with open(results_files_path + "/results.txt", 'w') as results_file:
       fig = plt.gcf() # gcf - get current figure
       fig.canvas.set_window_title('AP ' + class_name)
       # set plot title
-      plt.title(text)
+      plt.title(text, size=22)
       #plt.suptitle('This is a somewhat long figure title', fontsize=16)
       # set axis titles
-      plt.xlabel('Recall', fontsize='x-large')
-      plt.ylabel('Precision', fontsize='x-large')
+      plt.xlabel('Recall', fontsize='xx-large')
+      plt.ylabel('Precision', fontsize='xx-large')
       # optional - set axes
       axes = plt.gca() # gca - get current axes
       axes.set_xlim([0.0,1.0])
-      axes.set_ylim([0.0,1.05]) # .05 to give some extra space
+      axes.set_ylim([0.0,1.0])
+      plt.yticks(fontproperties='Times New Roman', size=20)
+      plt.xticks(fontproperties='Times New Roman', size=20)
       # Alternative option -> wait for button to be pressed
       #while not plt.waitforbuttonpress(): pass # wait for key display
       # Alternative option -> normal display
       #plt.show()
       # save the plot
-      fig.savefig(results_files_path + "/classes/" + class_name + ".png", dpi=600)
+      fig.savefig(results_files_path + "/classes/" + class_name + ".png", dpi=1200)
       plt.cla() # clear axes for next plot
 
   if show_animation:

@@ -4,7 +4,7 @@ try:
     import imgaug as ia
     from imgaug import augmenters as iaa
 except Exception:
-    raise ImportError("Pls install imgaug with (pip install imgaug)")
+    raise ImportError("Pls install imgaug")
 
 ia.seed(1)
 
@@ -524,8 +524,8 @@ def visualize_boxes_and_labels_on_image_array(
     max_boxes_to_draw=20,
     min_score_thresh=.2,
     agnostic_mode=False,
-    line_thickness=2,
-    groundtruth_box_visualization_color='black',
+    line_thickness=6,
+    groundtruth_box_visualization_color='red',
     skip_scores=False,
     skip_labels=False):
   """Overlay labeled boxes on an image with formatted scores and label names.

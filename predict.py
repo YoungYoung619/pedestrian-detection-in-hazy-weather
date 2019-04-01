@@ -14,7 +14,7 @@ import os
 from time import time
 
 from model.factory import model_factory
-from dataset1.hazy_person import provider
+from dataset.hazy_person import provider
 import utils.test_tools as test_tools
 
 import config
@@ -32,8 +32,8 @@ tf.app.flags.DEFINE_string(
     'The name of attention module to apply.')
 
 tf.app.flags.DEFINE_string(
-    'checkpoint_dir', "./checkpoint",
-    'The path to a checkpoint    from which to fine-tune.')
+    'checkpoint_dir', './checkpoint',
+    'The path to a checkpoint from which to fine-tune.')
 
 tf.app.flags.DEFINE_float(
     'select_threshold', 0.3, 'obj score less than it would be filter')
@@ -50,15 +50,25 @@ tf.app.flags.DEFINE_integer(
 tf.app.flags.DEFINE_integer(
     'vis_img_width', 800, 'the img width when visulize')
 
+#### config only for prioriboxes_mbn ####
+tf.app.flags.DEFINE_string(
+    'backbone_name', None,
+    'support mobilenet_v1 and mobilenet_v2')
+
+tf.app.flags.DEFINE_boolean(
+    'multiscale_feats', None,
+    'whether merge different scale features')
+
 ## define placeholder ##
 inputs = tf.placeholder(tf.float32,
                         shape=(None, config.img_size[0], config.img_size[1], 3))
 
-def build_graph(model_name, attention_module, is_training):
+def build_graph(model_name, attention_module, config_dict, is_training):
     """build tf graph for predict
     Args:
         model_name: choose a model to build
         attention_module: must be "se_block" or "cbam_block"
+        config_dict: some config for building net
         is_training: whether to train or test, here must be False
     Return:
         det_loss: a tensor with a shape [bs, priori_boxes_num, 4]
@@ -66,7 +76,8 @@ def build_graph(model_name, attention_module, is_training):
     """
     assert is_training == False
     net = model_factory(inputs=inputs, model_name=model_name,
-                        attention_module=attention_module, is_training=is_training)
+                        attention_module=attention_module, is_training=is_training,
+                        config_dict=config_dict)
     corner_bboxes, clf_pred = net.get_output_for_test()
 
     score, bboxes = test_tools.bboxes_select(clf_pred, corner_bboxes,
@@ -78,11 +89,14 @@ def build_graph(model_name, attention_module, is_training):
     return rscores, rbboxes
 
 def main(_):
-    scores, bboxes = build_graph(FLAGS.model_name, FLAGS.attention_module, is_training=False)
+    config_dict = {'multiscale_feats': FLAGS.multiscale_feats,
+                   'backbone': FLAGS.backbone_name}
+    scores, bboxes = build_graph(FLAGS.model_name, FLAGS.attention_module,
+                                 config_dict=config_dict, is_training=False)
 
-    config = tf.ConfigProto()
-    config.gpu_options.allow_growth = True
-    with tf.Session(config=config) as sess:
+    configuretion = tf.ConfigProto()
+    configuretion.gpu_options.allow_growth = True
+    with tf.Session(config=configuretion) as sess:
         if FLAGS.checkpoint_dir ==None:
             raise ValueError("checkpoint_dir must not be None")
         else:
@@ -90,9 +104,9 @@ def main(_):
             tf.train.Saver().restore(sess, model_name)
             print("Load checkpoint success...")
 
-        pd = provider(batch_size=1, for_what="predict", whether_aug=False)
+        pd = provider(batch_size=1, for_what="predict", whether_aug=True)
         while (True):
-            start = time()
+            # start = time()
             # norm_imgs, labels, corner_bboxes_gt = pd.load_batch()
             norm_imgs, corner_bboxes_gt = pd.load_batch()
             #print(corner_bboxes_gt)
@@ -124,7 +138,7 @@ def main(_):
             imgs_for_pred = cv2.cvtColor(imgs_for_pred, cv2.COLOR_BGR2RGB)
             label = np.ones(corner_bboxes_gt.shape[0], dtype=np.int32)
             imgs_for_gt = test_tools.visualize_boxes_and_labels_on_image_array(imgs_for_gt, corner_bboxes_gt, label,
-                                                                     None, config.category_index, skip_labels=True)
+                                                                     None, config.category_index, skip_labels=False)
 
             label = np.ones(bboxes_pred.shape[0], dtype=np.int32)
             imgs_for_pred = test_tools.visualize_boxes_and_labels_on_image_array(imgs_for_pred, bboxes_pred, label,

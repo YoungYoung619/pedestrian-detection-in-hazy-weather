@@ -12,7 +12,7 @@ model_map = {"prioriboxes_mbn":prioriboxes_mbn,
 slim = tf.contrib.slim
 
 class model_factory(object):
-    def __init__(self, model_name, attention_module, inputs, is_training):
+    def __init__(self, model_name, attention_module, inputs, config_dict, is_training):
         """init the model_factory
         Args:
             model_name: must be one of model_map
@@ -34,10 +34,16 @@ class model_factory(object):
         else:
             self.attention_module = None
 
-        self.det_out, self.clf_out \
-            = model_map[model_name](inputs=inputs, attention_module=self.attention_module,
-                                    is_training=is_training)
-
+        if model_name == 'prioriboxes_vgg':
+            self.det_out, self.clf_out \
+                = model_map[model_name](inputs=inputs, attention_module=self.attention_module,
+                                        is_training=is_training)
+        elif model_name == 'prioriboxes_mbn':
+            self.det_out, self.clf_out \
+                = model_map[model_name](inputs=inputs, attention_module=self.attention_module,
+                                        is_training=is_training, config_dict=config_dict)
+        else:
+            raise ValueError('error')
 
     def get_output_for_train(self):
         """get the nets output
