@@ -11,6 +11,13 @@ We used the average precision(AP) to evaluate our model, the AP for pedestrian w
 <div align=center><img width="400" height="288" src="pictures/pbmn.png"></div>
 
 ## How to use code
+### Requirement
+```
+Tensorflow
+Imgaug
+Cv2
+```
+
 ### Training
 Below script gives you an example of training a model with our models.
 ```
