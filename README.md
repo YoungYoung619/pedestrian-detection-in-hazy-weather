@@ -48,5 +48,12 @@ CHECKPOINT_FULL_NAME=/DIRECTORY/CHECKPOINT/MODEL_NAME
 2. cd evaluation
 3. python eval_tools.py
 ```
-### Pre-train Model
-[prioriboxes_mbn](https://drive.google.com/open?id=1UOF1ACYA3Nn5K_RjoItOUFSxnFL6sNOg)
+### Pre-trained Model
+You can download the [checkpoint](https://drive.google.com/open?id=1UOF1ACYA3Nn5K_RjoItOUFSxnFL6sNOg) and do prediction or evaluation.
+Attention: In order to use this pre-trained model, you must run with following flags:
+'''
+--model_name=prioriboxes_mbn
+--attention_module=se_block
+--backbone_name=mobilenet_v2
+--multiscale_feats=True
+'''
