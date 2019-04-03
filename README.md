@@ -27,8 +27,10 @@ Actually, our code supports multiple network configurations, below script show y
 ```
 --model_name = prioriboxes_mbn or prioriboxes_vgg
 --attention_module = se_block or cbam_block or None
+```
 
-when --model_name == prioriboxes_mbn, we colud choose backbone and config the weighted combination layer.
+when --model_name is prioriboxes_mbn, you colud choose backbone and config the weighted combination layer with following flags:
+```
 --backbone_name = mobilenet_v2 or mobilener_v1
 --multiscale_feats = True or False
 ```
