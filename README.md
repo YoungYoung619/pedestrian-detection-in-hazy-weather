@@ -37,9 +37,9 @@ python predict.py --model_name=prioriboxes_mbn --attention_module=se_block --bac
 Below script gives you an example of evaluating a model after training.
 ```
 CHECKPOINT_FULL_NAME=/DIRECTORY/CHECKPOINT/MODEL_NAME
-1. python evaluate.py --model_name=prioriboxes_mbn --attention_module=se_block --backone_name=mobilenet_v2 --checkpoint=CHECKPOINT_FULL_NAME
+1. python evaluate.py --model_name=prioriboxes_mbn --attention_module=se_block --backone_name=mobilenet_v2 --multiscale_feats=True --checkpoint=CHECKPOINT_FULL_NAME
 2. cd evaluation
 3. python eval_tools.py
 ```
 ### Pre-train Model
-#### to do
+[prioriboxes_mbn](https://drive.google.com/open?id=1UOF1ACYA3Nn5K_RjoItOUFSxnFL6sNOg)
