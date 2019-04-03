@@ -218,6 +218,10 @@ def main(_):
     logger.info('Total trainable parameters:%s'%
                 str(np.sum([np.prod(v.get_shape().as_list()) for v in tf.trainable_variables()])))
 
+    ## saver
+    saver = tf.train.Saver(tf.global_variables())
+    init = tf.global_variables_initializer()
+
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
     with tf.Session(config=config) as sess:
@@ -226,7 +230,7 @@ def main(_):
         writer = tf.summary.FileWriter(FLAGS.summary_dir, sess.graph)
 
         if FLAGS.checkpoint_dir ==None:
-            sess.run(tf.global_variables_initializer())
+            sess.run(init)
             logger.info('TF variables init success...')
         else:
             model_name = os.path.join(FLAGS.checkpoint_dir, FLAGS.model_name+'.model')
@@ -273,7 +277,7 @@ def main(_):
                     ## save model ##
                     logger.info('Saving model...')
                     model_name = os.path.join(FLAGS.train_dir,FLAGS.model_name+'.model')
-                    tf.train.Saver(tf.global_variables()).save(sess, model_name)
+                    saver.save(sess, model_name)
                     logger.info('Save model sucess...')
 
             if FLAGS.training_step != None:
