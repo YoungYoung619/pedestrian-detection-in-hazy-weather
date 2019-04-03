@@ -13,9 +13,9 @@ We used the average precision(AP) to evaluate our model, the AP for pedestrian w
 ## How to use code
 ### Requirement
 ```
-Tensorflow
-Imgaug
-Cv2
+tensorflow >= 1.6.0
+imgaug ==0.2.8
+opencv-python == 3.3.1.11
 ```
 
 ### Training
