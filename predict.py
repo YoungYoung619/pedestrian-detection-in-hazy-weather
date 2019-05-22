@@ -33,7 +33,7 @@ tf.app.flags.DEFINE_string(
     'The name of attention module to apply.')
 
 tf.app.flags.DEFINE_string(
-    'checkpoint', None,
+    'checkpoint_dir', '',
     'The full file name to a checkpoint from which to fine-tune.')
 
 tf.app.flags.DEFINE_float(
@@ -57,11 +57,11 @@ tf.app.flags.DEFINE_string(
     'support mobilenet_v1 and mobilenet_v2')
 
 tf.app.flags.DEFINE_boolean(
-    'multiscale_feats', None,
+    'multiscale_feats', True,
     'whether merge different scale features')
 
 tf.app.flags.DEFINE_boolean(
-    'whether_aug', None,
+    'whether_aug', True,
     'whether use augmentation to prediction')
 
 ## define placeholder ##
@@ -99,14 +99,18 @@ def main(_):
     scores, bboxes = build_graph(FLAGS.model_name, FLAGS.attention_module,
                                  config_dict=config_dict, is_training=False)
 
+    saver = tf.train.Saver(tf.global_variables())
+    ckpt = tf.train.get_checkpoint_state(FLAGS.checkpoint_dir)
+
     configuretion = tf.ConfigProto()
     configuretion.gpu_options.allow_growth = True
     with tf.Session(config=configuretion) as sess:
-        if FLAGS.checkpoint ==None:
-            raise ValueError("checkpoint_dir must not be None")
+        if ckpt:
+            logger.info('loading %s...' % str(ckpt.model_checkpoint_path))
+            saver.restore(sess, ckpt.model_checkpoint_path)
+            logger.info('Load checkpoint success...')
         else:
-            tf.train.Saver().restore(sess, FLAGS.checkpoint)
-            print("Load checkpoint success...")
+            raise ValueError("can not find checkpoint, pls check checkpoint_dir")
 
         pd = provider(batch_size=1, for_what="predict", whether_aug=FLAGS.whether_aug)
         logger.info("Please press any key to skip picture...")
