@@ -9,14 +9,12 @@ Author：Team Li
 """
 import tensorflow as tf
 import numpy as np
-import cv2
 import os
-from time import time
 
 from model.factory import model_factory
 from dataset.hazy_person import provider
 import utils.test_tools as test_tools
-
+from utils.logging import logger
 import config
 
 FLAGS = tf.app.flags.FLAGS
@@ -50,11 +48,6 @@ tf.app.flags.DEFINE_integer(
 tf.app.flags.DEFINE_integer(
     'compare_img_width', 224, 'the img width when compare with ground truth')
 
-tf.app.flags.DEFINE_integer(
-    'vis_img_height', 800, 'the img height when visulize')
-
-tf.app.flags.DEFINE_integer(
-    'vis_img_width', 800, 'the img width when visulize')
 
 #### config only for prioriboxes_mbn ####
 tf.app.flags.DEFINE_string(
@@ -100,15 +93,18 @@ def main(_):
     scores, bboxes = build_graph(FLAGS.model_name, FLAGS.attention_module, is_training=False,
                                  config_dict=config_dict)
 
+    saver = tf.train.Saver(tf.global_variables())
+    ckpt = tf.train.get_checkpoint_state(FLAGS.checkpoint_dir)
+
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
     with tf.Session(config=config) as sess:
-        if FLAGS.checkpoint_dir ==None:
-            raise ValueError("checkpoint_dir must not be None")
+        if ckpt:
+            logger.info('loading %s...' % str(ckpt.model_checkpoint_path))
+            saver.restore(sess, ckpt.model_checkpoint_path)
+            logger.info('Load checkpoint success...')
         else:
-            model_name = os.path.join(FLAGS.checkpoint_dir, FLAGS.model_name+".model")
-            tf.train.Saver().restore(sess, model_name)
-            print("Load checkpoint success...")
+            raise ValueError("can not find checkpoint, pls check checkpoint_dir")
 
         pd = provider(for_what="evaluate", whether_aug=False)
 
@@ -116,8 +112,6 @@ def main(_):
             norm_img, corner_bboxes_gt, file_name = pd.load_data_eval()
             if file_name != None:
                 scores_pred, bboxes_pred = sess.run([scores, bboxes], feed_dict={inputs: np.array([norm_img])})
-                #img = np.uint8((norm_img + 1.) * 255 / 2)
-                #img = cv2.resize(img, dsize=(FLAGS.vis_img_height, FLAGS.vis_img_width))
 
                 scores_pred = list(scores_pred.values())
                 bboxes_pred = list(bboxes_pred.values())
