@@ -33,7 +33,7 @@ tf.app.flags.DEFINE_string(
     ''')
 
 tf.app.flags.DEFINE_string(
-    'checkpoint_dir', None,
+    'checkpoint_dir', '',
     'The path to a checkpoint from which to fine-tune.')
 
 tf.app.flags.DEFINE_string(
@@ -221,6 +221,7 @@ def main(_):
     ## saver
     saver = tf.train.Saver(tf.global_variables())
     init = tf.global_variables_initializer()
+    ckpt = tf.train.get_checkpoint_state(FLAGS.checkpoint_dir)
 
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
@@ -229,13 +230,13 @@ def main(_):
         summary_dir = os.path.join(FLAGS.summary_dir)
         writer = tf.summary.FileWriter(FLAGS.summary_dir, sess.graph)
 
-        if FLAGS.checkpoint_dir ==None:
+        if ckpt:
+            logger.info('loading %s...' % str(ckpt.model_checkpoint_path))
+            saver.restore(sess, ckpt.model_checkpoint_path)
+            logger.info('Load checkpoint success...')
+        else:
             sess.run(init)
             logger.info('TF variables init success...')
-        else:
-            model_name = os.path.join(FLAGS.checkpoint_dir, FLAGS.model_name+'.model')
-            tf.train.Saver().restore(sess, model_name)
-            logger.info('Load checkpoint success...')
 
         pd = provider(batch_size=FLAGS.batch_size, for_what='train', whether_aug=True)
         avg_det_loss = 0.
