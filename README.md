@@ -39,14 +39,14 @@ when --model_name is prioriboxes_mbn, you colud choose backbone and config the w
 The job of prediction is to visualize the detection, Below script gives you an example of doing prediction after training.
 ```
 CHECKPOINT_DIR_NAME: something like /usr/my_dir/checkpoint
-python predict.py --model_name=prioriboxes_mbn --attention_module=se_block --backone_name=mobilenet_v2 --multiscale_feats=True --whether_aug=True --checkpoint_dir=CHECKPOINT_DIR_NAME
+python predict.py --model_name=prioriboxes_mbn --attention_module=se_block --backbone_name=mobilenet_v2 --multiscale_feats=True --whether_aug=True --checkpoint_dir=CHECKPOINT_DIR_NAME
 ```
 
 ### Evaluation
 Below script gives you an example of evaluating a model after training.
 ```
 CHECKPOINT_DIR_NAME: something like /usr/my_dir/checkpoint
-1. python evaluate.py --model_name=prioriboxes_mbn --attention_module=se_block --backone_name=mobilenet_v2 --multiscale_feats=True --checkpoint_dir=CHECKPOINT_DIR_NAME
+1. python evaluate.py --model_name=prioriboxes_mbn --attention_module=se_block --backbone_name=mobilenet_v2 --multiscale_feats=True --checkpoint_dir=CHECKPOINT_DIR_NAME
 2. cd evaluation
 3. python eval_tools.py
 ```
