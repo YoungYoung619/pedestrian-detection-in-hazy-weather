@@ -1,0 +1,26 @@
+<annotation>
+	<folder>hazePerson</folder>
+	<filename>467.jpg</filename>
+	<path>F:\111\hazePerson\467.jpg</path>
+	<source>
+		<database>Unknown</database>
+	</source>
+	<size>
+		<width>193</width>
+		<height>197</height>
+		<depth>3</depth>
+	</size>
+	<segmented>0</segmented>
+	<object>
+		<name>person</name>
+		<pose>Unspecified</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>12</xmin>
+			<ymin>42</ymin>
+			<xmax>66</xmax>
+			<ymax>173</ymax>
+		</bndbox>
+	</object>
+</annotation>

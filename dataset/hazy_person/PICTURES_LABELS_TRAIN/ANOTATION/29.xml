@@ -1,0 +1,26 @@
+<annotation>
+	<folder>baseOnCNN</folder>
+	<filename>29.jpg</filename>
+	<path>F:\111\hazePerson\baseOnCNN\29.jpg</path>
+	<source>
+		<database>Unknown</database>
+	</source>
+	<size>
+		<width>96</width>
+		<height>87</height>
+		<depth>3</depth>
+	</size>
+	<segmented>0</segmented>
+	<object>
+		<name>person</name>
+		<pose>Unspecified</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>67</xmin>
+			<ymin>22</ymin>
+			<xmax>80</xmax>
+			<ymax>69</ymax>
+		</bndbox>
+	</object>
+</annotation>

@@ -22,14 +22,14 @@ import logging
 logging.basicConfig(level = logging.INFO,format = '%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-pic_train_dir_str = "PICTURES_LABELS_TRAIN/PICTURES/"
-label_train_dir_str = "PICTURES_LABELS_TRAIN/ANOTATION/"
+pic_train_dir_str = "hazy_person/PICTURES_LABELS_TRAIN/PICTURES/"
+label_train_dir_str = "hazy_person/PICTURES_LABELS_TRAIN/ANOTATION/"
 
 # pic_test_dir_str = "PICTURES_LABELS_TEST/PICTURES/"
 # label_test_dir_str = "PICTURES_LABELS_TEST/ANOTATION/"
 
-pic_test_dir_str = "PICTURES_LABELS_TEMP_TEST/PICTURES/"
-label_test_dir_str = "PICTURES_LABELS_TEMP_TEST/ANOTATION/"
+pic_test_dir_str = "hazy_person/PICTURES_LABELS_TEMP_TEST/PICTURES/"
+label_test_dir_str = "hazy_person/PICTURES_LABELS_TEMP_TEST/ANOTATION/"
 
 class provider(object):
     """provide multi threads API for reading data

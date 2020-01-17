@@ -1,0 +1,26 @@
+<annotation>
+	<folder>PICTURES</folder>
+	<filename>280.jpg</filename>
+	<path>F:\my_project\pedestrain_detection_in_hazy\dataset1\PICTURES_LABELS_TRAIN\PICTURES\280.jpg</path>
+	<source>
+		<database>Unknown</database>
+	</source>
+	<size>
+		<width>176</width>
+		<height>181</height>
+		<depth>3</depth>
+	</size>
+	<segmented>0</segmented>
+	<object>
+		<name>person</name>
+		<pose>Unspecified</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>27</xmin>
+			<ymin>70</ymin>
+			<xmax>155</xmax>
+			<ymax>129</ymax>
+		</bndbox>
+	</object>
+</annotation>
