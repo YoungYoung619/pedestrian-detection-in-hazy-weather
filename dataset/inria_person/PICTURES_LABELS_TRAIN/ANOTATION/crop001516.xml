@@ -1,0 +1,27 @@
+<?xml version="1.0" ?>
+<annotation>
+	<folder>VOC2007</folder>
+	<filename>crop001516.txt</filename>
+	<source>
+		<database>PASperson Database</database>
+		<annotation>PASperson</annotation>
+	</source>
+	<size>
+		<width>763</width>
+		<height>960</height>
+		<depth>3</depth>
+	</size>
+	<segmented>0</segmented>
+	<object>
+		<name>person</name>
+		<pose>Unspecified</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>348</xmin>
+			<ymin>208</ymin>
+			<xmax>497</xmax>
+			<ymax>806</ymax>
+		</bndbox>
+	</object>
+</annotation>
