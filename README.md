@@ -1,4 +1,5 @@
 ## Citations
+If this project is helpful to your research, please cite this below.
 ```
 @article{lvanyang2019,
   title={Deep Learning Approaches on Pedestrian Detection in Hazy Weather},
