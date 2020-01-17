@@ -13,13 +13,19 @@ import os
 from time import time
 
 from model.factory import model_factory
-from dataset.hazy_person import provider
+from dataset.hazy_person import provider as hazy_person_pd
+from dataset.inria_person import provider as inria_person_pd
+from dataset.union_person import provider as union_person_pd
 import config
 from utils.logging import logger
 
 # =========================================================================== #
 # General Flags.
 # =========================================================================== #
+tf.app.flags.DEFINE_string(
+    'dataset_name', 'inria_person',
+    'The name of the dataset to train, can be hazy_person, inria_person， union_person')
+
 tf.app.flags.DEFINE_string(
     'model_name', 'prioriboxes_mbn',
     'The name of the architecture to train.')
@@ -37,7 +43,7 @@ tf.app.flags.DEFINE_string(
     'The path to a checkpoint from which to fine-tune.')
 
 tf.app.flags.DEFINE_string(
-    'train_dir', './checkpoint/',
+    'train_dir', './checkpoint',
     'Directory where checkpoints are written to.')
 
 tf.app.flags.DEFINE_string(
@@ -47,14 +53,14 @@ tf.app.flags.DEFINE_string(
 tf.app.flags.DEFINE_float('learning_rate', 1e-3, 'Initial learning rate.')
 
 tf.app.flags.DEFINE_integer(
-    'batch_size', 30, 'The number of samples in each batch.')
+    'batch_size', 20, 'The number of samples in each batch.')
 
 tf.app.flags.DEFINE_integer(
     'f_log_step', 20,
     'The frequency with which logs are print.')
 
 tf.app.flags.DEFINE_integer(
-    'f_summary_step', 10,
+    'f_summary_step', 20,
     'The frequency with which the model is saved, in step.')
 
 tf.app.flags.DEFINE_integer(
@@ -62,13 +68,13 @@ tf.app.flags.DEFINE_integer(
     'The frequency with which summaries are saved, in step.')
 
 tf.app.flags.DEFINE_integer(
-    'training_step', None,
+    'training_step', 20000,
     'when training step bigger than training_step, training would stop')
 
 #### config only for prioriboxes_mbn ####
 tf.app.flags.DEFINE_string(
     'backbone_name', 'mobilenet_v2',
-    'support mobilenet_v1 and mobilenet_v2')
+    'support mobilenet_v1 and mobilenet_v2, only used when model_name is prioriboxes_mbn')
 
 tf.app.flags.DEFINE_boolean(
     'multiscale_feats', True,
@@ -90,6 +96,15 @@ label_gt = tf.placeholder(tf.int32,
                                len(config.priori_bboxes), 1))
 global_step = tf.Variable(0, trainable=False, name='global_step')
 
+sigma_gaussian = tf.Variable(10., name="sigma_gaussian", trainable=True)
+sigma_gibbs = tf.Variable(10., name="sigma_gibbs", trainable=True)
+lr = tf.placeholder(dtype=tf.float32)
+
+dataset_map = {'hazy_person': hazy_person_pd,
+               'inria_person': inria_person_pd,
+               'union_person': union_person_pd}
+
+provider = dataset_map[config.dataset_name]
 
 def build_graph(model_name, attention_module, config_dict, is_training):
     """build tf graph
@@ -172,24 +187,32 @@ def build_optimizer(det_loss, clf_loss, var_list=None):
     Return:
         a train_ops
     """
+    global sigma_gibbs
+    global sigma_gaussian
+
     with tf.name_scope("optimize"):
-        loss = 5*det_loss + 0.5*clf_loss
+        sigma_gaussian = tf.maximum(sigma_gaussian, 1e-8)
+        sigma_gibbs = tf.maximum(sigma_gibbs, 1e-8)
+
+        loss = 0.5/tf.square(sigma_gaussian)*det_loss + 1./tf.square(sigma_gibbs)*clf_loss + tf.log(sigma_gaussian*sigma_gibbs)
 
         # learning_rate = tf.train.exponential_decay(FLAGS.learning_rate, global_step,
-        #                                            2*70000 / FLAGS.batch_size,
+        #                                            2000 / FLAGS.batch_size,
         #                                            0.97, staircase=True)
 
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
         with tf.control_dependencies(update_ops):
-            optimizer = tf.train.AdamOptimizer(FLAGS.learning_rate)
+            optimizer = tf.train.AdamOptimizer(lr)
             if var_list == None:
                 train_ops = optimizer.minimize(loss, global_step= global_step)
             else:
                 train_ops = optimizer.minimize(loss, global_step= global_step, var_list=var_list)
 
+        tf.summary.scalar('sigma_gaussian', sigma_gaussian)
+        tf.summary.scalar('sigma_gibbs', sigma_gibbs)
         tf.summary.scalar("det_loss", det_loss)
         tf.summary.scalar("clf_loss", clf_loss)
-        #tf.summary.scalar("learning_rate", FLAGS.learning_rate)
+        tf.summary.scalar("learning_rate", lr)
         return train_ops
 
 
@@ -219,12 +242,13 @@ def main(_):
                 str(np.sum([np.prod(v.get_shape().as_list()) for v in tf.trainable_variables()])))
 
     ## saver
-    saver = tf.train.Saver(tf.global_variables())
+    saver = tf.train.Saver(tf.global_variables(), max_to_keep=5)
     init = tf.global_variables_initializer()
     ckpt = tf.train.get_checkpoint_state(FLAGS.checkpoint_dir)
 
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
+    current_step = 0
     with tf.Session(config=config) as sess:
         ## create a summary writer ##
         summary_dir = os.path.join(FLAGS.summary_dir)
@@ -242,7 +266,18 @@ def main(_):
         avg_det_loss = 0.
         avg_clf_loss = 0.
         avg_time = 0.
+        warm_up_step = 1000
         while(True):
+            if current_step < warm_up_step:
+                warm_up_init = 1e-6
+                learning_rate = current_step/warm_up_step*(FLAGS.learning_rate - warm_up_init) + warm_up_init
+            elif current_step < FLAGS.training_step//3:
+                learning_rate = FLAGS.learning_rate
+            elif current_step < FLAGS.training_step*2//3:
+                learning_rate = FLAGS.learning_rate / 10.
+            else:
+                learning_rate = FLAGS.learning_rate / 100.
+
             start = time()
             imgs, labels, t_bboex = pd.load_batch()
             imgs = np.array(imgs)
@@ -250,7 +285,7 @@ def main(_):
             t_bboex = np.reshape(np.array(t_bboex), newshape=[FLAGS.batch_size, -1, 4])
             t_ops, m_ops, current_step, d_loss, c_loss \
                 =sess.run([train_ops, merge_ops, global_step, det_loss, clf_loss],
-                            feed_dict={inputs: imgs, label_gt: labels, bboxes_gt:t_bboex})
+                            feed_dict={inputs: imgs, label_gt: labels, bboxes_gt:t_bboex, lr:learning_rate})
             t = round(time() - start, 3)
 
             if FLAGS.f_log_step != None:
@@ -275,11 +310,17 @@ def main(_):
 
             if FLAGS.f_save_step != None:
                 if current_step%FLAGS.f_save_step == FLAGS.f_save_step-1:
-                    ## save model ##
                     logger.info('Saving model...')
-                    model_name = os.path.join(FLAGS.train_dir,FLAGS.model_name+'.model')
-                    saver.save(sess, model_name)
+                    model_name = os.path.join(FLAGS.train_dir, FLAGS.model_name + '.model')
+                    saver.save(sess, model_name, global_step=current_step)
                     logger.info('Save model sucess...')
+                    pass
+
+                # if current_step in [110000, 120000, 130000, 1400000, 150000, 160000, 170000, 180000]:
+                #     logger.info('Saving model...')
+                #     model_name = os.path.join(FLAGS.train_dir, str(current_step//1000)+'k/'+FLAGS.model_name+'.model')
+                #     saver.save(sess, model_name, global_step=current_step)
+                #     logger.info('Save model sucess...')
 
             if FLAGS.training_step != None:
                 if current_step >= FLAGS.training_step:
