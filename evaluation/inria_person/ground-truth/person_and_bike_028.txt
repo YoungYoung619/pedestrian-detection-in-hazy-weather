@@ -1,0 +1,6 @@
+person  165 54 182 110
+person  155 58 165 105
+person  88 63 125 196
+person  116 57 127 88
+person  132 54 140 82
+person  137 52 147 80
