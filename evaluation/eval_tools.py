@@ -10,6 +10,7 @@ import operator
 import sys
 import argparse
 
+import config
 
 MINOVERLAP = 0.5 # default value (defined in the PASCAL VOC2012 challenge)
 parser = argparse.ArgumentParser()
@@ -275,7 +276,7 @@ def draw_plot_func(dictionary, n_classes, window_title, plot_title, x_label, out
 tmp_files_path = "tmp_files"
 if not os.path.exists(tmp_files_path): # if it doesn't exist already
   os.makedirs(tmp_files_path)
-results_files_path = "results"
+results_files_path = config.dataset_name+"/results"
 if os.path.exists(results_files_path): # if it exist already
   # reset the results directory
   shutil.rmtree(results_files_path)
@@ -292,7 +293,7 @@ if show_animation:
    Create a list of all the class names present in the ground-truth (gt_classes).
 """
 # get a list with the ground-truth files
-ground_truth_files_list = glob.glob('ground-truth/*.txt')
+ground_truth_files_list = glob.glob(config.dataset_name+'/ground-truth/*.txt')
 if len(ground_truth_files_list) == 0:
   error("Error: No ground-truth files found!")
 ground_truth_files_list.sort()
@@ -304,7 +305,7 @@ for txt_file in ground_truth_files_list:
   file_id = txt_file.split(".txt",1)[0]
   file_id = os.path.basename(os.path.normpath(file_id))
   # check if there is a correspondent predicted objects file
-  if not os.path.exists('detection-results/' + file_id + ".txt"):
+  if not os.path.exists(config.dataset_name+'/detection-results/' + file_id + ".txt"):
     error_msg = "Error. File not found: detection-results/" +  file_id + ".txt\n"
     error_msg += "(You can avoid this error message by running extra/intersect-gt-and-pred.py)"
     error(error_msg)
@@ -381,7 +382,7 @@ if specific_iou_flagged:
    Load each of the predicted files into a temporary ".json" file.
 """
 # get a list with the predicted files
-predicted_files_list = glob.glob('detection-results/*.txt')
+predicted_files_list = glob.glob(config.dataset_name+'/detection-results/*.txt')
 predicted_files_list.sort()
 
 for class_index, class_name in enumerate(gt_classes):
@@ -392,8 +393,8 @@ for class_index, class_name in enumerate(gt_classes):
     file_id = txt_file.split(".txt",1)[0]
     file_id = os.path.basename(os.path.normpath(file_id))
     if class_index == 0:
-      if not os.path.exists('ground-truth/' + file_id + ".txt"):
-        error_msg = "Error. File not found: ground-truth/" +  file_id + ".txt\n"
+      if not os.path.exists(config.dataset_name+'/ground-truth/' + file_id + ".txt"):
+        error_msg = "Error. File not found: "+config.dataset_name+ "/ground-truth/" +  file_id + ".txt\n"
         error_msg += "(You can avoid this error message by running extra/intersect-gt-and-pred.py)"
         error(error_msg)
     lines = file_lines_to_list(txt_file)
@@ -598,7 +599,7 @@ with open(results_files_path + "/results.txt", 'w') as results_file:
      Draw plot
     """
     if draw_plot:
-      plt.figure(figsize=(8, 12))
+      plt.figure(figsize=(10, 15))
       plt.subplot(211)
       plt.plot(rec, prec, '-o')
       # add a new penultimate point to the list (mrec[-2], 0.0)
@@ -607,27 +608,31 @@ with open(results_files_path + "/results.txt", 'w') as results_file:
       area_under_curve_y = mprec[:-1] + [0.0] + [mprec[-1]]
       plt.fill_between(area_under_curve_x, 0, area_under_curve_y, alpha=0.2, edgecolor='r')
       # set window title
-      fig = plt.gcf() # gcf - get current figure
+      fig = plt.gcf()  # gcf - get current figure
       fig.canvas.set_window_title('AP ' + class_name)
       # set plot title
-      plt.title(text, size=22)
-      #plt.suptitle('This is a somewhat long figure title', fontsize=16)
+      plt.title(text, size=40)
+      # plt.suptitle('This is a somewhat long figure title', fontsize=16)
       # set axis titles
-      plt.xlabel('Recall', fontsize='xx-large')
-      plt.ylabel('Precision', fontsize='xx-large')
+      font2 = {'family': 'Times New Roman',
+               'weight': 'normal',
+               'size': 37,
+               }
+      plt.xlabel('Recall', font2)
+      plt.ylabel('Precision', font2)
       # optional - set axes
-      axes = plt.gca() # gca - get current axes
-      axes.set_xlim([0.0,1.0])
-      axes.set_ylim([0.0,1.0])
-      plt.yticks(fontproperties='Times New Roman', size=20)
-      plt.xticks(fontproperties='Times New Roman', size=20)
+      axes = plt.gca()  # gca - get current axes
+      axes.set_xlim([0.0, 1.0])
+      axes.set_ylim([0.0, 1.0])
+      plt.yticks(fontproperties='Times New Roman', size=35)
+      plt.xticks(fontproperties='Times New Roman', size=35)
       # Alternative option -> wait for button to be pressed
-      #while not plt.waitforbuttonpress(): pass # wait for key display
+      # while not plt.waitforbuttonpress(): pass # wait for key display
       # Alternative option -> normal display
-      #plt.show()
+      # plt.show()
       # save the plot
       fig.savefig(results_files_path + "/classes/" + class_name + ".png", dpi=1200)
-      plt.cla() # clear axes for next plot
+      plt.cla()  # clear axes for next plot
 
   if show_animation:
     cv2.destroyAllWindows()
