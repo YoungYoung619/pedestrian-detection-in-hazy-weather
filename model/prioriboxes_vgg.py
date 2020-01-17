@@ -4,7 +4,7 @@ from model.attention_module import *
 
 slim = tf.contrib.slim
 
-def prioriboxes_vgg(inputs, attention_module, is_training, bboxs_each_cell=2, input_check=True):
+def prioriboxes_vgg(inputs, attention_module, is_training, bboxs_each_cell=2, input_check=False):
     """ the whole model is inspried by yolov2, what makes our model different
         is that our model use vgg as backbone, and we add attention module
     Args:
@@ -24,7 +24,7 @@ def prioriboxes_vgg(inputs, attention_module, is_training, bboxs_each_cell=2, in
     shape = inputs.get_shape()
     if input_check:
         if shape[1]!=224 or shape[2]!=224:
-            raise ValueError("inputs' height or width must be 224")
+            raise ValueError("inputs' height and width must be 224")
 
     net, end_points = vgg_16(inputs=inputs, is_training=is_training)
 

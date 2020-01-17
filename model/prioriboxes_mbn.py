@@ -8,7 +8,7 @@ slim = tf.contrib.slim
 extract_feature_names = {'mobilenet_v2':['layer_7', 'layer_14', 'layer_19'],
                          'mobilenet_v1':['Conv2d_4_pointwise','Conv2d_8_pointwise','Conv2d_13_pointwise']}
 
-def prioriboxes_mbn(inputs, attention_module, is_training, config_dict, bboxs_each_cell=2):
+def prioriboxes_mbn(inputs, attention_module, is_training, config_dict, bboxs_each_cell=3):
     """ the whole model is inspried by yolov2, what makes our model different is that
         our model use mobilenetV2 as backbone, and use different feature map to do a
         merge, and we add attention module to improve the performance.
@@ -82,6 +82,6 @@ def prioriboxes_mbn(inputs, attention_module, is_training, config_dict, bboxs_ea
 if __name__ == '__main__':
     imgs = tf.placeholder(tf.float32, shape=(None, 224, 224, 3))
     config_dict = {'multiscale_feats':True,
-                   'backbone':'mobilenet_v1'}
+                   'backbone':'mobilenet_v2'}
     a, b = prioriboxes_mbn(inputs=imgs, attention_module=se_block, is_training=True, config_dict=config_dict)
     pass

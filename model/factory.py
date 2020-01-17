@@ -37,11 +37,11 @@ class model_factory(object):
         if model_name == 'prioriboxes_vgg':
             self.det_out, self.clf_out \
                 = model_map[model_name](inputs=inputs, attention_module=self.attention_module,
-                                        is_training=is_training)
+                                        is_training=is_training, bboxs_each_cell=len(config.priori_bboxes))
         elif model_name == 'prioriboxes_mbn':
             self.det_out, self.clf_out \
                 = model_map[model_name](inputs=inputs, attention_module=self.attention_module,
-                                        is_training=is_training, config_dict=config_dict)
+                                        is_training=is_training, config_dict=config_dict, bboxs_each_cell=len(config.priori_bboxes))
         else:
             raise ValueError('error')
 

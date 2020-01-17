@@ -1,7 +1,7 @@
 import tensorflow as tf
 import collections
 
-weight_decay=1e-4
+weight_decay=2e-5
 keep_prob = 1.
 
 def relu(x, name='relu6'):
