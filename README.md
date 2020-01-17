@@ -38,15 +38,15 @@ when --model_name is prioriboxes_mbn, you colud choose backbone and config the w
 ### Prediction
 The job of prediction is to visualize the detection, Below script gives you an example of doing prediction after training.
 ```
-CHECKPOINT_FULL_NAME=/DIRECTORY/CHECKPOINT/MODEL_NAME
-python predict.py --model_name=prioriboxes_mbn --attention_module=se_block --backone_name=mobilenet_v2 --multiscale_feats=True --whether_aug=True --checkpoint=CHECKPOINT_FULL_NAME
+CHECKPOINT_DIR_NAME: something like /usr/my_dir/checkpoint
+python predict.py --model_name=prioriboxes_mbn --attention_module=se_block --backbone_name=mobilenet_v2 --multiscale_feats=True --whether_aug=True --checkpoint_dir=CHECKPOINT_DIR_NAME
 ```
 
 ### Evaluation
 Below script gives you an example of evaluating a model after training.
 ```
-CHECKPOINT_FULL_NAME=/DIRECTORY/CHECKPOINT/MODEL_NAME
-1. python evaluate.py --model_name=prioriboxes_mbn --attention_module=se_block --backone_name=mobilenet_v2 --multiscale_feats=True --checkpoint=CHECKPOINT_FULL_NAME
+CHECKPOINT_DIR_NAME: something like /usr/my_dir/checkpoint
+1. python evaluate.py --model_name=prioriboxes_mbn --attention_module=se_block --backbone_name=mobilenet_v2 --multiscale_feats=True --checkpoint_dir=CHECKPOINT_DIR_NAME
 2. cd evaluation
 3. python eval_tools.py
 ```
@@ -58,4 +58,17 @@ Note: In order to use this pre-trained model, you must run with following flags:
 --attention_module=se_block
 --backbone_name=mobilenet_v2
 --multiscale_feats=True
+```
+
+## Citations
+If this project is helpful to your research, please cite this below.
+```
+@article{lvanyang2019,
+  title={Deep Learning Approaches on Pedestrian Detection in Hazy Weather},
+  author={G. Li, Y. Yang, X. Qu},
+  journal={IEEE Transactions on Industrial Electronics},
+  DOI={10.1109/TIE.2019.2945295}
+  year={2019}
+  publisher={IEEE}
+}
 ```
