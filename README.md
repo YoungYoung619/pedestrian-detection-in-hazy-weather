@@ -1,3 +1,15 @@
+## Citations
+```
+@article{lvanyang2019,
+  title={Deep Learning Approaches on Pedestrian Detection in Hazy Weather},
+  author={G. Li, Y. Yang, X. Qu},
+  journal={IEEE Transactions on Industrial Electronics},
+  DOI={10.1109/TIE.2019.2945295}
+  year={2019}
+  publisher={IEEE}
+}
+```
+
 # Pedestrian detection in hazy weather
 Traffic environments are constantly changing with fluctuating weather, driving, road, and pedestrian conditions. This flux is especially pronounced in China due to frequent haze that obstructs visibility on city roadways. As such, an efficient and accurate pedestrian detection algorithm for use during hazy weather is necessary.
 ![detection_expample_pbmn](pictures/pbmn.jpg)
