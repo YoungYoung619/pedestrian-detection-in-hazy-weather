@@ -60,6 +60,10 @@ Note: In order to use this pre-trained model, you must run with following flags:
 --multiscale_feats=True
 ```
 
+### Other dataset
+Our package also support the inria dataset. Some detection examples are shown as following: 
+<div align=center><img src="pictures/inria.png"></div>
+
 ## Citations
 If this project is helpful to your research, please cite this below.
 ```
