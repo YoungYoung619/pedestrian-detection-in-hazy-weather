@@ -14,7 +14,7 @@ import os
 from time import time
 
 from model.factory import model_factory
-from dataset.hazy_person import provider
+from dataset.inria_person import provider
 import utils.test_tools as test_tools
 from utils.logging import logger
 
@@ -25,11 +25,11 @@ FLAGS = tf.app.flags.FLAGS
 slim = tf.contrib.slim
 
 tf.app.flags.DEFINE_string(
-    'model_name', None,
+    'model_name', 'prioriboxes_mbn',
     'The name of the architecture to train.')
 
 tf.app.flags.DEFINE_string(
-    'attention_module', None,
+    'attention_module', 'se_block',
     'The name of attention module to apply.')
 
 tf.app.flags.DEFINE_string(

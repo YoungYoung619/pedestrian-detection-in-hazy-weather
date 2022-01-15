@@ -50,10 +50,10 @@ tf.app.flags.DEFINE_string(
     'summary_dir', './summary/',
     'Directory where checkpoints are written to.')
 
-tf.app.flags.DEFINE_float('learning_rate', 1e-3, 'Initial learning rate.')
+tf.app.flags.DEFINE_float('learning_rate', 1e-4, 'Initial learning rate.')
 
 tf.app.flags.DEFINE_integer(
-    'batch_size', 20, 'The number of samples in each batch.')
+    'batch_size', 25, 'The number of samples in each batch.')
 
 tf.app.flags.DEFINE_integer(
     'f_log_step', 20,
@@ -68,7 +68,7 @@ tf.app.flags.DEFINE_integer(
     'The frequency with which summaries are saved, in step.')
 
 tf.app.flags.DEFINE_integer(
-    'training_step', 20000,
+    'training_step', 200000,
     'when training step bigger than training_step, training would stop')
 
 #### config only for prioriboxes_mbn ####
@@ -96,8 +96,6 @@ label_gt = tf.placeholder(tf.int32,
                                len(config.priori_bboxes), 1))
 global_step = tf.Variable(0, trainable=False, name='global_step')
 
-sigma_gaussian = tf.Variable(10., name="sigma_gaussian", trainable=True)
-sigma_gibbs = tf.Variable(10., name="sigma_gibbs", trainable=True)
 lr = tf.placeholder(dtype=tf.float32)
 
 dataset_map = {'hazy_person': hazy_person_pd,
@@ -187,18 +185,9 @@ def build_optimizer(det_loss, clf_loss, var_list=None):
     Return:
         a train_ops
     """
-    global sigma_gibbs
-    global sigma_gaussian
 
     with tf.name_scope("optimize"):
-        sigma_gaussian = tf.maximum(sigma_gaussian, 1e-8)
-        sigma_gibbs = tf.maximum(sigma_gibbs, 1e-8)
-
-        loss = 0.5/tf.square(sigma_gaussian)*det_loss + 1./tf.square(sigma_gibbs)*clf_loss + tf.log(sigma_gaussian*sigma_gibbs)
-
-        # learning_rate = tf.train.exponential_decay(FLAGS.learning_rate, global_step,
-        #                                            2000 / FLAGS.batch_size,
-        #                                            0.97, staircase=True)
+        loss = 5*det_loss + 0.5*clf_loss
 
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
         with tf.control_dependencies(update_ops):
@@ -208,8 +197,6 @@ def build_optimizer(det_loss, clf_loss, var_list=None):
             else:
                 train_ops = optimizer.minimize(loss, global_step= global_step, var_list=var_list)
 
-        tf.summary.scalar('sigma_gaussian', sigma_gaussian)
-        tf.summary.scalar('sigma_gibbs', sigma_gibbs)
         tf.summary.scalar("det_loss", det_loss)
         tf.summary.scalar("clf_loss", clf_loss)
         tf.summary.scalar("learning_rate", lr)
@@ -266,12 +253,8 @@ def main(_):
         avg_det_loss = 0.
         avg_clf_loss = 0.
         avg_time = 0.
-        warm_up_step = 1000
         while(True):
-            if current_step < warm_up_step:
-                warm_up_init = 1e-6
-                learning_rate = current_step/warm_up_step*(FLAGS.learning_rate - warm_up_init) + warm_up_init
-            elif current_step < FLAGS.training_step//3:
+            if current_step < FLAGS.training_step//3:
                 learning_rate = FLAGS.learning_rate
             elif current_step < FLAGS.training_step*2//3:
                 learning_rate = FLAGS.learning_rate / 10.

@@ -37,7 +37,7 @@ tf.app.flags.DEFINE_string(
     'The name of attention module to apply.')
 
 tf.app.flags.DEFINE_string(
-    'checkpoint_dir', './checkpoint/hazy',
+    'checkpoint_dir', '',
     'The path to a checkpoint from which to fine-tune.')
 
 #
@@ -55,10 +55,10 @@ tf.app.flags.DEFINE_string(
 
 
 tf.app.flags.DEFINE_float(
-    'select_threshold', 0.3, 'obj score less than it would be filter')
+    'select_threshold', 0.1, 'obj score less than it would be filter')
 
 tf.app.flags.DEFINE_float(
-    'nms_threshold', 0.6, 'nms threshold')
+    'nms_threshold', 0.5, 'nms threshold')
 
 tf.app.flags.DEFINE_integer(
     'keep_top_k', 30, 'maximun num of obj after nms')

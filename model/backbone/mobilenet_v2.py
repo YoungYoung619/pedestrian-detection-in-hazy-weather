@@ -145,7 +145,7 @@ def mobilenetv2(inputs, is_training):
     endPoints = collections.OrderedDict()
     exp = 6  # expansion ratio
     with tf.variable_scope('mobilenetv2'):
-        net = conv2d_block(inputs, 32, 3, 2, is_training, name='conv1_1')  # size/2
+        net = conv2d_block(inputs, 32, 3, 1, is_training, name='conv1_1')  # size/2
         endPoints['layer_1'] = net
 
         net = res_block(net, 1, 16, 1, is_training, name='res2_1')
